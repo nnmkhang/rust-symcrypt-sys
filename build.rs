@@ -7,13 +7,15 @@ use std::path::PathBuf;
 
 fn main() {
 
-    println!("cargo:rustc-link-search=native=D:/rust/pfx_leak/rust-symcrypt-sys/inc");
 
-    println!("cargo:libdir=./inc");
-
-    println!("cargo:rustc-link-lib=dylib=symcrypttestmodule");
-    fs::copy("inc/symcrypttestmodule.dll", "target/debug/symcrypttestmodule.dll").unwrap();
-
+    #[cfg(target_os = "windows")] 
+    {
+        println!("cargo:rustc-link-search=native=D:/rust/pfx_leak/rust-symcrypt-sys/inc");
+        println!("cargo:libdir=./inc");
+        println!("cargo:rustc-link-lib=dylib=symcrypttestmodule");
+        fs::copy("inc/symcrypttestmodule.dll", "target/debug/symcrypttestmodule.dll").unwrap();
+    }
+    
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=inc/wrapper.h");
