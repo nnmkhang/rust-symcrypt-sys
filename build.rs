@@ -15,7 +15,14 @@ fn main() {
         println!("cargo:rustc-link-lib=dylib=symcrypttestmodule");
         fs::copy("inc/symcrypttestmodule.dll", "target/debug/symcrypttestmodule.dll").unwrap();
     }
-    
+    #[cfg(target_os = "linux")]
+    {
+        println!("cargo:rustc-link-search=native=/home/khang/rust/rust-symcrypt-sys/inc/");
+        println!("cargo:rustc-link-search=native=/khang/rust/SymCrypt/bin/module/generic");
+        println!("cargo:libdir=./inc");
+        println!("cargo:rustc-link-lib=dylib=libsymcrypt");
+        fs::copy("inc/linux_inc/libsymcrypt.so", "target/debug/libsymcrypt.so").unwrap();
+    }
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=inc/wrapper.h");
