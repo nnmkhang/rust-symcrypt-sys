@@ -22,14 +22,14 @@ impl SymCrypt {
 
     pub fn sha256(data: &[u8]) -> [u8; 32] {
         let mut hash = [0u8; 32];
-    
+        
         // Call the SymCrypt function using the generated bindings
         unsafe {
             println!("we're inside symcryptsha");
             ffi::SymCryptSha256(
                 data.as_ptr(), // pbData
-                data.len() as u64, //cbData
-                hash.as_mut_ptr(), //pbResult
+                data.len() as ffi::SIZE_T, //cbData
+                hash.as_mut_ptr() //pbResult
             );
         }
         hash
