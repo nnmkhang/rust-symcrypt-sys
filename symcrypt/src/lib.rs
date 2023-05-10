@@ -1,22 +1,12 @@
-extern crate libc;
+use symcrypt_sys::*;
 
-#[allow(non_upper_case_globals)]
-#[allow(non_camel_case_types)]
-#[allow(non_snake_case)]
-
-pub mod ffi {
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-}
-
-#[non_exhaustive] // External users cannot construct or destruct a SymCrypt, must use the constructors that we make
-#[derive(Clone, Debug)]
 pub struct SymCrypt;
 
 impl SymCrypt {
     pub fn new () {
         unsafe 
         { 
-            // ffi::SymCryptInit();
+            symcrypt_sys::SymCryptInit();
         }
     }
 
@@ -26,9 +16,9 @@ impl SymCrypt {
         // Call the SymCrypt function using the generated bindings
         unsafe {
             println!("we're inside symcryptsha");
-            ffi::SymCryptSha256(
+            symcrypt_sys::SymCryptSha256(
                 data.as_ptr(), // pbData
-                data.len() as ffi::SIZE_T, //cbData
+                data.len() as symcrypt_sys::SIZE_T, //cbData
                 hash.as_mut_ptr() //pbResult
             );
         }
@@ -44,7 +34,7 @@ mod tests {
     #[test]
     fn it_works() {
         println!("inside test function");
-        SymCrypt::new();
+        //SymCrypt::new();
 
         let data = b"hello world";
         let hash = SymCrypt::sha256(data);

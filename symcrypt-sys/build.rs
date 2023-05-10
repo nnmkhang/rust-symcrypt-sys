@@ -1,4 +1,5 @@
 extern crate bindgen;
+extern crate pkg_config;
 use std::fs;
 
 
@@ -10,15 +11,17 @@ fn main() {
 
     #[cfg(target_os = "windows")] 
     {
-        println!("cargo:rustc-link-search=native=D:/rust/pfx_leak/rust-symcrypt-sys/inc");
+        println!("cargo:rustc-link-search=native=D:/rust/pfx_leak/rust-symcrypt-sys/symcypt-sys/inc");
         println!("cargo:libdir=./inc");
         println!("cargo:rustc-link-lib=dylib=symcrypttestmodule");
         fs::copy("inc/symcrypttestmodule.dll", "target/debug/symcrypttestmodule.dll").unwrap();
     }
     
     #[cfg(target_os = "linux")]
-    {
-        println!("cargo:rustc-link-search=native=/home/khang/rust/rust-symcrypt-sys/inc/");
+    {   
+        // pkg_config::probe_library("SymCrypt").unwrap(); // need to set version requiremnt, bindgen will create bindings based on specific .h file of SymCrypt.h,
+        // without version requiremnt, upstream pkgs could have dependancy issues. Should switch this every year to snap to FIPS compliant build
+        println!("cargo:rustc-link-search=native=/home/khang/rust/rust-symcrypt-sys/symcrypt-sys/inc/");
         println!("cargo:libdir=./inc");
         println!("cargo:rustc-link-lib=dylib=symcrypt");
         fs::copy("inc/libsymcrypt.so", "target/debug/libsymcrypt.so").unwrap();
