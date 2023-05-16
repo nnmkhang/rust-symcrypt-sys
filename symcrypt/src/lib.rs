@@ -6,16 +6,16 @@ impl SymCrypt {
     pub fn new () {
         unsafe 
         { 
-            symcrypt_sys::SymCryptInit();
+            //symcrypt_sys::SymCryptInit(); 
+            // TODO: Find out why SymCryptInit() breaks on linux / windows (BREAKING)
         }
     }
 
-    pub fn Sha256(data: &[u8]) -> [u8; 32] {
+    pub fn sha256(data: &[u8]) -> [u8; 32] {
         let mut hash = [0u8; 32];
         
         // Call the SymCrypt function using the generated bindings
         unsafe {
-            println!("we're inside symcryptsha");
             symcrypt_sys::SymCryptSha256(
                 data.as_ptr(), // pbData
                 data.len() as symcrypt_sys::SIZE_T, //cbData

@@ -1,7 +1,5 @@
 extern crate bindgen;
 extern crate pkg_config;
-use std::fs;
-
 
 use std::env;
 use std::path::PathBuf;
@@ -11,10 +9,12 @@ fn main() {
 
     #[cfg(target_os = "windows")] 
     {
-        println!("cargo:rustc-link-search=native=D:/rust/pfx_leak/rust-symcrypt-sys/symcypt-sys/inc");
+        println!("cargo:rustc-link-search=native=C:/Windows/System32/"); // ! Work around, looking for better solution
         println!("cargo:libdir=./inc");
         println!("cargo:rustc-link-lib=dylib=symcrypttestmodule"); // test module used in lieu of official symcrypt dll
-        fs::copy("inc/symcrypttestmodule.dll", "target/debug/symcrypttestmodule.dll").unwrap();
+        // this dll will be in Windows/System32. This is to mirror future plans; as symcrypt is planned to ship with windows
+
+        // symcrypttestmodule* files must be placed in Windows/System32/ as a workaround at the moment.
     }
     
     #[cfg(target_os = "linux")]
