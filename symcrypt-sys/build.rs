@@ -13,21 +13,24 @@ fn main() {
     {
         println!("cargo:rustc-link-search=native=D:/rust/pfx_leak/rust-symcrypt-sys/symcypt-sys/inc");
         println!("cargo:libdir=./inc");
-        println!("cargo:rustc-link-lib=dylib=symcrypttestmodule");
+        println!("cargo:rustc-link-lib=dylib=symcrypttestmodule"); // test module used in lieu of official symcrypt dll
         fs::copy("inc/symcrypttestmodule.dll", "target/debug/symcrypttestmodule.dll").unwrap();
     }
     
     #[cfg(target_os = "linux")]
     {   
-        // pkg_config::probe_library("SymCrypt").unwrap(); // need to set version requiremnt, bindgen will create bindings based on specific .h file of SymCrypt.h,
-        // without version requiremnt, upstream pkgs could have dependancy issues. Should switch this every year to snap to FIPS compliant build
-        println!("cargo:rustc-link-search=native=/home/khang/rust/rust-symcrypt-sys/symcrypt-sys/inc/");
         println!("cargo:libdir=./inc");
-        println!("cargo:rustc-link-lib=dylib=symcrypt");
-        fs::copy("inc/libsymcrypt.so", "target/debug/libsymcrypt.so").unwrap();
-        fs::copy("inc/libsymcrypt.so.103", "target/debug/libsymcrypt.so.103").unwrap();
-        fs::copy("inc/libsymcrypt.so.103.1.0", "target/debug/libsymcrypt.so.103.1.0").unwrap();
+        println!("cargo:rustc-link-lib=dylib=symcrypt"); // the lib prefix for libsymcrypt is implied on linux
+
+        // TODO: Create a script that copies all libsymcrypt.so* files from SymCrypt path to /lib/x86_64-linux-gnu/
+        // The ld linker will look for the symcrypt.so files within /lib/x86_64-linux-gnu/. No need to set a hardcoded path.
+        // Need to find windows equivalent, and other common file paths for other target platforms.
     }
+
+    // TODO: Factor out binding generation. Bindgen should only be run manually with updates to underlying SymCrypt code that 
+    // we decide to take.
+
+    // TODO: Add whitelist functions
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=inc/wrapper.h");

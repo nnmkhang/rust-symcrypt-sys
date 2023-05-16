@@ -10,7 +10,7 @@ impl SymCrypt {
         }
     }
 
-    pub fn sha256(data: &[u8]) -> [u8; 32] {
+    pub fn Sha256(data: &[u8]) -> [u8; 32] {
         let mut hash = [0u8; 32];
         
         // Call the SymCrypt function using the generated bindings
@@ -25,7 +25,6 @@ impl SymCrypt {
         hash
     }
 }
-
 
 #[cfg(test)]
 mod tests {
