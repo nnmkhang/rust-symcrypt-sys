@@ -1,17 +1,19 @@
-use symcrypt::SymCrypt;
+use symcrypt::SymCryptSha256;
 
 fn main() {
     println!("Hello, world!");
-    //SymCrypt::new();
-    let data = b"hello world";
-    let hash = SymCrypt::sha256(data);
-    println!("SHA256 hash : {:?}", hash);
 
-    let data = b"test test test";
-    let hash = SymCrypt::sha256(data);
-    println!("SHA256 hash : {:?}", hash);
+    let mut result = [0u8; 32];
 
-    let data = b"phil and khang";
-    let hash = SymCrypt::sha256(data);
-    println!("SHA256 hash : {:?}", hash);
+    let data = b"this is a test";
+    SymCryptSha256::sha256(data, &mut result);
+    println!("SHA256 hash: {:?}", result);
+
+    let mut sha_test = SymCryptSha256::new();
+    SymCryptSha256::append(&mut sha_test, b"this is a test");
+    let mut result = [0u8; 32];
+    SymCryptSha256::result(&mut sha_test, &mut result);
+    println!("result: {:?}", result);
+    println!("done");
+    
 }
