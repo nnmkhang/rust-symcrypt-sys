@@ -10,91 +10,118 @@ impl SymCryptInit {
     }
 }
 
-pub struct SymCryptSha256 {
-    state: symcrypt_sys::_SYMCRYPT_SHA256_STATE
+pub struct Sha256State {
+    pub state: symcrypt_sys::_SYMCRYPT_SHA256_STATE // keep as pub? Debug trait exists on _SYMCRYPT_SHA256_STATE already
 } 
 
-impl SymCryptSha256 {
+impl Sha256State { // Sha256State 
     pub fn new() -> Self {
-        unsafe {
-            let mut instance = SymCryptSha256 {
-                state: symcrypt_sys::_SYMCRYPT_SHA256_STATE {
-                    bytesInBuffer: 0,
-                    magic: 0,
-                    dataLengthL: 0,
-                    dataLengthH: 0,
-                    buffer: [0u8; 64],
-                    chain: symcrypt_sys::_SYMCRYPT_SHA256_CHAINING_STATE {
-                        H: [0u32; 8],
-                    },
-                }
+            let mut instance = Sha256State {
+                state: symcrypt_sys::_SYMCRYPT_SHA256_STATE::default()
+
             };
-            symcrypt_sys::SymCryptSha256Init(&mut instance.state);
-            instance
-        }
+            unsafe {
+                symcrypt_sys::SymCryptSha256Init(&mut instance.state);
+            }
+        instance
     }
-
-    pub fn sha256(data: &[u8], result: &mut [u8]) { // provide return vs modify 
-        unsafe {
-            symcrypt_sys::SymCryptSha256(
-                data.as_ptr(), // pbData
-                data.len() as symcrypt_sys::SIZE_T, //cbData
-                result.as_mut_ptr() //pbResult
-            );
-        }
-    }
-
+    
     pub fn append(&mut self, data: &[u8] ) {
         unsafe {
             symcrypt_sys::SymCryptSha256Append(
-                &mut self.state,
+                &mut self.state, // pState
                 data.as_ptr(), // pbData
                 data.len() as symcrypt_sys::SIZE_T, //cbData
             );
         }
     }
 
-    pub fn result(&mut self, result: &mut [u8]) {
+    pub fn result(&mut self, result: &mut [u8; 32]) {
         unsafe {
             symcrypt_sys::SymCryptSha256Result(&mut self.state, result.as_mut_ptr())
         }
     }
+}
 
-    pub fn drop(&mut self) {
-        // TODO: figure out drop trait
+impl Drop for Sha256State {
+    fn drop(&mut self) {
+        // Zero out the memory for state
+        unsafe {
+            std::ptr::write_volatile(&mut self.state, std::mem::zeroed());
+        }
     }
 }
 
-// extern "C" {
-//     pub fn SymCryptSha256(pbData: PCBYTE, cbData: SIZE_T, pbResult: PBYTE);
-// }
-// extern "C" {
-//     pub fn SymCryptSha256Init(pState: PSYMCRYPT_SHA256_STATE);
-// }
-// extern "C" {
-//     pub fn SymCryptSha256Append(pState: PSYMCRYPT_SHA256_STATE, pbData: PCBYTE, cbData: SIZE_T);
-// }
-// extern "C" {
-//     pub fn SymCryptSha256Result(pState: PSYMCRYPT_SHA256_STATE, pbResult: PBYTE);
-// }
-// extern "C" {
-//     pub fn SymCryptSha256StateCopy(pSrc: PCSYMCRYPT_SHA256_STATE, pDst: PSYMCRYPT_SHA256_STATE);
-// }
-// extern "C" {
-//     pub fn SymCryptSha256StateExport(pState: PCSYMCRYPT_SHA256_STATE, pbBlob: PBYTE);
-// }
-// extern "C" {
-//     pub fn SymCryptSha256StateImport(
-//         pState: PSYMCRYPT_SHA256_STATE,
-//         pbBlob: PCBYTE,
-//     ) -> SYMCRYPT_ERROR;
-// }
+pub struct Sha384State {
+    pub state: symcrypt_sys::_SYMCRYPT_SHA384_STATE
+}
 
-// pub struct _SYMCRYPT_SHA256_STATE {
-//     pub bytesInBuffer: UINT32,
-//     pub magic: SIZE_T,
-//     pub dataLengthL: UINT64,
-//     pub dataLengthH: UINT64,
-//     pub buffer: [BYTE; 64usize],
-//     pub chain: SYMCRYPT_SHA256_CHAINING_STATE,
-// }
+impl Sha384State {
+    pub fn new() -> Self {
+        let mut instance = Sha384State {
+            state: symcrypt_sys::_SYMCRYPT_SHA384_STATE::default()
+        };
+        unsafe {
+            symcrypt_sys::SymCryptSha384Init(&mut instance.state);
+        }
+        instance
+    }
+    
+    pub fn append(&mut self, data: &[u8] ) {
+        unsafe {
+            symcrypt_sys::SymCryptSha384Append(
+                &mut self.state, // pState
+                data.as_ptr(), // pbData
+                data.len() as symcrypt_sys::SIZE_T, //cbData
+            );
+        }
+    }
+
+    pub fn result(&mut self, result: &mut [u8; 48]) {
+        unsafe {
+            symcrypt_sys::SymCryptSha384Result(&mut self.state, result.as_mut_ptr())
+        }
+    }
+}
+
+impl Drop for Sha384State {
+    fn drop(&mut self) {
+        // Zero out the memory for state
+        unsafe {
+            std::ptr::write_volatile(&mut self.state, std::mem::zeroed());
+        }
+    }
+}
+
+
+// Stateless Hash Functions:
+
+pub fn sha256(data: &[u8], result: &mut [u8; 32]) {
+    unsafe {
+        symcrypt_sys::SymCryptSha256(
+            data.as_ptr(), // pbData
+            data.len() as symcrypt_sys::SIZE_T, // cbData
+            result.as_mut_ptr(), // pbResult
+        );
+    }
+}
+
+pub fn sha384(data: &[u8], result: &mut [u8; 48]) {
+    unsafe {
+        symcrypt_sys::SymCryptSha384(
+            data.as_ptr(), // pbData
+            data.len() as symcrypt_sys::SIZE_T, // cbData
+            result.as_mut_ptr(), // pbResult
+        );
+    }
+}
+
+// For testing
+pub fn check_hash_size() -> symcrypt_sys::SIZE_T {
+    let mut result: u64 = 0;
+    unsafe{
+        //symcrypt_sys::SymCryptSha256Algorithm
+       result = symcrypt_sys::SymCryptHashStateSize(symcrypt_sys::SymCryptSha256Algorithm); //phash
+    }
+    result
+}

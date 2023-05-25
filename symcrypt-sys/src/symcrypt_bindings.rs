@@ -44,7 +44,7 @@ pub type SYMCRYPT_BLOCKCIPHER = _SYMCRYPT_BLOCKCIPHER;
 pub type PCSYMCRYPT_BLOCKCIPHER = *const SYMCRYPT_BLOCKCIPHER;
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_MD5_CHAINING_STATE {
     pub H: [UINT32; 4usize],
 }
@@ -77,7 +77,7 @@ fn bindgen_test_layout__SYMCRYPT_MD5_CHAINING_STATE() {
 pub type SYMCRYPT_MD5_CHAINING_STATE = _SYMCRYPT_MD5_CHAINING_STATE;
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_SHA1_CHAINING_STATE {
     pub H: [UINT32; 5usize],
 }
@@ -110,7 +110,7 @@ fn bindgen_test_layout__SYMCRYPT_SHA1_CHAINING_STATE() {
 pub type SYMCRYPT_SHA1_CHAINING_STATE = _SYMCRYPT_SHA1_CHAINING_STATE;
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_SHA256_CHAINING_STATE {
     pub H: [UINT32; 8usize],
 }
@@ -228,12 +228,21 @@ fn bindgen_test_layout__SYMCRYPT_SHA256_STATE() {
         )
     );
 }
+impl Default for _SYMCRYPT_SHA256_STATE {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_SHA256_STATE = _SYMCRYPT_SHA256_STATE;
 pub type PSYMCRYPT_SHA256_STATE = *mut _SYMCRYPT_SHA256_STATE;
 pub type PCSYMCRYPT_SHA256_STATE = *const SYMCRYPT_SHA256_STATE;
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_SHA512_CHAINING_STATE {
     pub H: [UINT64; 8usize],
 }
@@ -351,6 +360,15 @@ fn bindgen_test_layout__SYMCRYPT_SHA384_STATE() {
         )
     );
 }
+impl Default for _SYMCRYPT_SHA384_STATE {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_SHA384_STATE = _SYMCRYPT_SHA384_STATE;
 pub type PSYMCRYPT_SHA384_STATE = *mut _SYMCRYPT_SHA384_STATE;
 pub type PCSYMCRYPT_SHA384_STATE = *const SYMCRYPT_SHA384_STATE;
@@ -368,7 +386,7 @@ pub type PSYMCRYPT_HASH_STATE_COPY_FUNC =
     ::std::option::Option<unsafe extern "C" fn(pStateSrc: PCVOID, pStateDst: PVOID)>;
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_HASH {
     pub initFunc: PSYMCRYPT_HASH_INIT_FUNC,
     pub appendFunc: PSYMCRYPT_HASH_APPEND_FUNC,
@@ -498,7 +516,7 @@ fn bindgen_test_layout__SYMCRYPT_HASH() {
 }
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_HMAC_MD5_EXPANDED_KEY {
     pub innerState: SYMCRYPT_MD5_CHAINING_STATE,
     pub outerState: SYMCRYPT_MD5_CHAINING_STATE,
@@ -553,7 +571,7 @@ fn bindgen_test_layout__SYMCRYPT_HMAC_MD5_EXPANDED_KEY() {
 pub type SYMCRYPT_HMAC_MD5_EXPANDED_KEY = _SYMCRYPT_HMAC_MD5_EXPANDED_KEY;
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_HMAC_SHA1_EXPANDED_KEY {
     pub innerState: SYMCRYPT_SHA1_CHAINING_STATE,
     pub outerState: SYMCRYPT_SHA1_CHAINING_STATE,
@@ -611,7 +629,7 @@ fn bindgen_test_layout__SYMCRYPT_HMAC_SHA1_EXPANDED_KEY() {
 pub type SYMCRYPT_HMAC_SHA1_EXPANDED_KEY = _SYMCRYPT_HMAC_SHA1_EXPANDED_KEY;
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_HMAC_SHA256_EXPANDED_KEY {
     pub innerState: SYMCRYPT_SHA256_CHAINING_STATE,
     pub outerState: SYMCRYPT_SHA256_CHAINING_STATE,
@@ -723,12 +741,21 @@ fn bindgen_test_layout__SYMCRYPT_HMAC_SHA256_STATE() {
         )
     );
 }
+impl Default for _SYMCRYPT_HMAC_SHA256_STATE {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_HMAC_SHA256_STATE = _SYMCRYPT_HMAC_SHA256_STATE;
 pub type PSYMCRYPT_HMAC_SHA256_STATE = *mut _SYMCRYPT_HMAC_SHA256_STATE;
 pub type PCSYMCRYPT_HMAC_SHA256_STATE = *const SYMCRYPT_HMAC_SHA256_STATE;
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_HMAC_SHA384_EXPANDED_KEY {
     pub innerState: SYMCRYPT_SHA512_CHAINING_STATE,
     pub outerState: SYMCRYPT_SHA512_CHAINING_STATE,
@@ -840,12 +867,21 @@ fn bindgen_test_layout__SYMCRYPT_HMAC_SHA384_STATE() {
         )
     );
 }
+impl Default for _SYMCRYPT_HMAC_SHA384_STATE {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_HMAC_SHA384_STATE = _SYMCRYPT_HMAC_SHA384_STATE;
 pub type PSYMCRYPT_HMAC_SHA384_STATE = *mut _SYMCRYPT_HMAC_SHA384_STATE;
 pub type PCSYMCRYPT_HMAC_SHA384_STATE = *const SYMCRYPT_HMAC_SHA384_STATE;
 #[repr(C)]
 #[repr(align(16))]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_HMAC_SHA512_EXPANDED_KEY {
     pub innerState: SYMCRYPT_SHA512_CHAINING_STATE,
     pub outerState: SYMCRYPT_SHA512_CHAINING_STATE,
@@ -966,6 +1002,15 @@ fn bindgen_test_layout__SYMCRYPT_AES_EXPANDED_KEY() {
         )
     );
 }
+impl Default for _SYMCRYPT_AES_EXPANDED_KEY {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_AES_EXPANDED_KEY = _SYMCRYPT_AES_EXPANDED_KEY;
 #[repr(C)]
 #[repr(align(16))]
@@ -1031,6 +1076,15 @@ fn bindgen_test_layout__SYMCRYPT_AES_CMAC_EXPANDED_KEY() {
             stringify!(magic)
         )
     );
+}
+impl Default for _SYMCRYPT_AES_CMAC_EXPANDED_KEY {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 pub type SYMCRYPT_AES_CMAC_EXPANDED_KEY = _SYMCRYPT_AES_CMAC_EXPANDED_KEY;
 #[repr(C)]
@@ -1119,6 +1173,15 @@ fn bindgen_test_layout__SYMCRYPT_MAC_EXPANDED_KEY() {
             stringify!(aescmacKey)
         )
     );
+}
+impl Default for _SYMCRYPT_MAC_EXPANDED_KEY {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 pub type SYMCRYPT_MAC_EXPANDED_KEY = _SYMCRYPT_MAC_EXPANDED_KEY;
 pub type PSYMCRYPT_MAC_EXPAND_KEY = ::std::option::Option<
@@ -1248,6 +1311,15 @@ fn bindgen_test_layout__SYMCRYPT_MAC() {
         )
     );
 }
+impl Default for _SYMCRYPT_MAC {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_MAC = _SYMCRYPT_MAC;
 pub type PCSYMCRYPT_MAC = *const SYMCRYPT_MAC;
 #[repr(C)]
@@ -1287,6 +1359,15 @@ fn bindgen_test_layout__SYMCRYPT_GCM_SUPPORTED_BLOCKCIPHER_KEYS() {
             stringify!(aes)
         )
     );
+}
+impl Default for _SYMCRYPT_GCM_SUPPORTED_BLOCKCIPHER_KEYS {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 pub type SYMCRYPT_GCM_SUPPORTED_BLOCKCIPHER_KEYS = _SYMCRYPT_GCM_SUPPORTED_BLOCKCIPHER_KEYS;
 #[repr(C)]
@@ -1343,6 +1424,15 @@ fn bindgen_test_layout__SYMCRYPT_GF128_ELEMENT() {
         )
     );
 }
+impl Default for _SYMCRYPT_GF128_ELEMENT {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_GF128_ELEMENT = _SYMCRYPT_GF128_ELEMENT;
 #[repr(C)]
 #[repr(align(16))]
@@ -1375,6 +1465,15 @@ fn bindgen_test_layout__SYMCRYPT_GHASH_EXPANDED_KEY() {
             stringify!(table)
         )
     );
+}
+impl Default for _SYMCRYPT_GHASH_EXPANDED_KEY {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 pub type SYMCRYPT_GHASH_EXPANDED_KEY = _SYMCRYPT_GHASH_EXPANDED_KEY;
 #[repr(C)]
@@ -1464,6 +1563,15 @@ fn bindgen_test_layout__SYMCRYPT_GCM_EXPANDED_KEY() {
             stringify!(magic)
         )
     );
+}
+impl Default for _SYMCRYPT_GCM_EXPANDED_KEY {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 pub type SYMCRYPT_GCM_EXPANDED_KEY = _SYMCRYPT_GCM_EXPANDED_KEY;
 pub type PSYMCRYPT_GCM_EXPANDED_KEY = *mut _SYMCRYPT_GCM_EXPANDED_KEY;
@@ -1587,6 +1695,15 @@ fn bindgen_test_layout__SYMCRYPT_GCM_STATE() {
         )
     );
 }
+impl Default for _SYMCRYPT_GCM_STATE {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_GCM_STATE = _SYMCRYPT_GCM_STATE;
 pub type PSYMCRYPT_GCM_STATE = *mut _SYMCRYPT_GCM_STATE;
 pub type PCSYMCRYPT_GCM_STATE = *const SYMCRYPT_GCM_STATE;
@@ -1619,7 +1736,7 @@ pub type PSYMCRYPT_BLOCKCIPHER_AEADPART_MODE = ::std::option::Option<
     unsafe extern "C" fn(pState: PVOID, pbSrc: PCBYTE, pbDst: PBYTE, cbData: SIZE_T),
 >;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_BLOCKCIPHER {
     pub expandKeyFunc: PSYMCRYPT_BLOCKCIPHER_EXPAND_KEY,
     pub encryptFunc: PSYMCRYPT_BLOCKCIPHER_CRYPT,
@@ -1827,6 +1944,15 @@ fn bindgen_test_layout__SYMCRYPT_TLSPRF1_2_EXPANDED_KEY() {
         )
     );
 }
+impl Default for _SYMCRYPT_TLSPRF1_2_EXPANDED_KEY {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_TLSPRF1_2_EXPANDED_KEY = _SYMCRYPT_TLSPRF1_2_EXPANDED_KEY;
 pub type PSYMCRYPT_TLSPRF1_2_EXPANDED_KEY = *mut _SYMCRYPT_TLSPRF1_2_EXPANDED_KEY;
 pub type PCSYMCRYPT_TLSPRF1_2_EXPANDED_KEY = *const SYMCRYPT_TLSPRF1_2_EXPANDED_KEY;
@@ -1873,6 +1999,15 @@ fn bindgen_test_layout__SYMCRYPT_HKDF_EXPANDED_KEY() {
         )
     );
 }
+impl Default for _SYMCRYPT_HKDF_EXPANDED_KEY {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_HKDF_EXPANDED_KEY = _SYMCRYPT_HKDF_EXPANDED_KEY;
 pub type PSYMCRYPT_HKDF_EXPANDED_KEY = *mut _SYMCRYPT_HKDF_EXPANDED_KEY;
 pub type PCSYMCRYPT_HKDF_EXPANDED_KEY = *const SYMCRYPT_HKDF_EXPANDED_KEY;
@@ -1903,7 +2038,7 @@ pub union _SYMCRYPT_INT__bindgen_ty_1 {
     pub fdef: _SYMCRYPT_INT__bindgen_ty_1__bindgen_ty_1,
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_INT__bindgen_ty_1__bindgen_ty_1 {
     pub uint32: [UINT32; 1usize],
 }
@@ -1964,6 +2099,15 @@ fn bindgen_test_layout__SYMCRYPT_INT__bindgen_ty_1() {
             stringify!(fdef)
         )
     );
+}
+impl Default for _SYMCRYPT_INT__bindgen_ty_1 {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 #[test]
 fn bindgen_test_layout__SYMCRYPT_INT() {
@@ -2030,6 +2174,15 @@ fn bindgen_test_layout__SYMCRYPT_INT() {
         )
     );
 }
+impl Default for _SYMCRYPT_INT {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 #[repr(C)]
 #[repr(align(32))]
 #[derive(Copy, Clone)]
@@ -2048,7 +2201,7 @@ pub union _SYMCRYPT_DIVISOR__bindgen_ty_1 {
     pub fdef: _SYMCRYPT_DIVISOR__bindgen_ty_1__bindgen_ty_1,
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_DIVISOR__bindgen_ty_1__bindgen_ty_1 {
     pub W: UINT64,
 }
@@ -2109,6 +2262,15 @@ fn bindgen_test_layout__SYMCRYPT_DIVISOR__bindgen_ty_1() {
             stringify!(fdef)
         )
     );
+}
+impl Default for _SYMCRYPT_DIVISOR__bindgen_ty_1 {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 #[test]
 fn bindgen_test_layout__SYMCRYPT_DIVISOR() {
@@ -2195,6 +2357,15 @@ fn bindgen_test_layout__SYMCRYPT_DIVISOR() {
         )
     );
 }
+impl Default for _SYMCRYPT_DIVISOR {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 #[repr(C)]
 #[repr(align(32))]
 #[derive(Copy, Clone)]
@@ -2263,8 +2434,17 @@ fn bindgen_test_layout__SYMCRYPT_MODULUS__bindgen_ty_1__bindgen_ty_1() {
         )
     );
 }
+impl Default for _SYMCRYPT_MODULUS__bindgen_ty_1__bindgen_ty_1 {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_MODULUS__bindgen_ty_1__bindgen_ty_2 {
     pub k: UINT32,
 }
@@ -2335,6 +2515,15 @@ fn bindgen_test_layout__SYMCRYPT_MODULUS__bindgen_ty_1() {
             stringify!(pseudoMersenne)
         )
     );
+}
+impl Default for _SYMCRYPT_MODULUS__bindgen_ty_1 {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 #[test]
 fn bindgen_test_layout__SYMCRYPT_MODULUS() {
@@ -2431,6 +2620,15 @@ fn bindgen_test_layout__SYMCRYPT_MODULUS() {
         )
     );
 }
+impl Default for _SYMCRYPT_MODULUS {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 #[repr(C)]
 #[repr(align(32))]
 #[derive(Copy, Clone)]
@@ -2471,6 +2669,15 @@ fn bindgen_test_layout__SYMCRYPT_MODELEMENT__bindgen_ty_1() {
         )
     );
 }
+impl Default for _SYMCRYPT_MODELEMENT__bindgen_ty_1 {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 #[test]
 fn bindgen_test_layout__SYMCRYPT_MODELEMENT() {
     const UNINIT: ::std::mem::MaybeUninit<_SYMCRYPT_MODELEMENT> = ::std::mem::MaybeUninit::uninit();
@@ -2495,6 +2702,15 @@ fn bindgen_test_layout__SYMCRYPT_MODELEMENT() {
             stringify!(d)
         )
     );
+}
+impl Default for _SYMCRYPT_MODELEMENT {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 pub const _SYMCRYPT_ECPOINT_COORDINATES_SYMCRYPT_ECPOINT_COORDINATES_INVALID:
     _SYMCRYPT_ECPOINT_COORDINATES = 0;
@@ -2576,6 +2792,15 @@ fn bindgen_test_layout__SYMCRYPT_ECURVE_INFO_PRECOMP() {
         )
     );
 }
+impl Default for _SYMCRYPT_ECURVE_INFO_PRECOMP {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_ECURVE_INFO_PRECOMP = _SYMCRYPT_ECURVE_INFO_PRECOMP;
 #[repr(C)]
 #[repr(align(32))]
@@ -2641,6 +2866,15 @@ fn bindgen_test_layout__SYMCRYPT_ECURVE__bindgen_ty_1() {
             stringify!(sw)
         )
     );
+}
+impl Default for _SYMCRYPT_ECURVE__bindgen_ty_1 {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 #[test]
 fn bindgen_test_layout__SYMCRYPT_ECURVE() {
@@ -2947,6 +3181,15 @@ fn bindgen_test_layout__SYMCRYPT_ECURVE() {
         )
     );
 }
+impl Default for _SYMCRYPT_ECURVE {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_ECURVE = _SYMCRYPT_ECURVE;
 pub type PSYMCRYPT_ECURVE = *mut SYMCRYPT_ECURVE;
 pub type PCSYMCRYPT_ECURVE = *const SYMCRYPT_ECURVE;
@@ -3002,6 +3245,15 @@ fn bindgen_test_layout__SYMCRYPT_ECPOINT() {
             stringify!(magic)
         )
     );
+}
+impl Default for _SYMCRYPT_ECPOINT {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 #[repr(C)]
 #[repr(align(32))]
@@ -3089,11 +3341,60 @@ fn bindgen_test_layout__SYMCRYPT_ECKEY() {
         )
     );
 }
+impl Default for _SYMCRYPT_ECKEY {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_ECKEY = _SYMCRYPT_ECKEY;
 pub type PSYMCRYPT_ECKEY = *mut SYMCRYPT_ECKEY;
 pub type PCSYMCRYPT_ECKEY = *const SYMCRYPT_ECKEY;
 extern "C" {
     pub fn SymCryptInit();
+}
+extern "C" {
+    pub fn SymCryptHashResultSize(pHash: PCSYMCRYPT_HASH) -> SIZE_T;
+}
+extern "C" {
+    pub fn SymCryptHashInputBlockSize(pHash: PCSYMCRYPT_HASH) -> SIZE_T;
+}
+extern "C" {
+    pub fn SymCryptHashStateSize(pHash: PCSYMCRYPT_HASH) -> SIZE_T;
+}
+extern "C" {
+    pub fn SymCryptHash(
+        pHash: PCSYMCRYPT_HASH,
+        pbData: PCBYTE,
+        cbData: SIZE_T,
+        pbResult: PBYTE,
+        cbResult: SIZE_T,
+    );
+}
+extern "C" {
+    pub fn SymCryptHashInit(pHash: PCSYMCRYPT_HASH, pState: PVOID);
+}
+extern "C" {
+    pub fn SymCryptHashAppend(
+        pHash: PCSYMCRYPT_HASH,
+        pState: PVOID,
+        pbData: PCBYTE,
+        cbData: SIZE_T,
+    );
+}
+extern "C" {
+    pub fn SymCryptHashResult(
+        pHash: PCSYMCRYPT_HASH,
+        pState: PVOID,
+        pbResult: PBYTE,
+        cbResult: SIZE_T,
+    );
+}
+extern "C" {
+    pub fn SymCryptHashStateCopy(pHash: PCSYMCRYPT_HASH, pSrc: PCVOID, pDst: PVOID);
 }
 extern "C" {
     pub fn SymCryptSha256(pbData: PCBYTE, cbData: SIZE_T, pbResult: PBYTE);
@@ -3121,6 +3422,12 @@ extern "C" {
 }
 extern "C" {
     pub fn SymCryptSha256Selftest();
+}
+// extern "C" {
+//     pub fn SymCryptSha256Algorithm(pbData: PCBYTE, cbData: SIZE_T, pbResult: PBYTE);
+// }
+extern "C" {
+    pub static SymCryptSha256Algorithm: PCSYMCRYPT_HASH;
 }
 extern "C" {
     pub fn SymCryptSha384(pbData: PCBYTE, cbData: SIZE_T, pbResult: PBYTE);
@@ -3558,6 +3865,15 @@ fn bindgen_test_layout__SYMCRYPT_ECURVE_PARAMS() {
             stringify!(cbSeed)
         )
     );
+}
+impl Default for _SYMCRYPT_ECURVE_PARAMS {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
 }
 pub type SYMCRYPT_ECURVE_PARAMS = _SYMCRYPT_ECURVE_PARAMS;
 pub type PCSYMCRYPT_ECURVE_PARAMS = *const SYMCRYPT_ECURVE_PARAMS;

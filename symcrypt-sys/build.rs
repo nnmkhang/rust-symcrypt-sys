@@ -1,5 +1,4 @@
 extern crate bindgen;
-extern crate libloading;
 
 use std::env;
 use std::path::PathBuf;
@@ -8,7 +7,6 @@ fn main() {
     #[cfg(target_os = "windows")] 
     {
         println!("cargo:rustc-link-search=native=C:/Windows/System32/"); // ! Work around, looking for better solution
-        //libloading::Library::new("C:/Windows/System32/").expect("Failed to load library");
         println!("cargo:libdir=./inc");
         println!("cargo:rustc-link-lib=dylib=symcrypttestmodule"); // test module used in lieu of official symcrypt dll
         // this dll will be in Windows/System32. This is to mirror future plans; as symcrypt is planned to ship with windows
@@ -70,11 +68,16 @@ fn main() {
 
         .allowlist_function("SymCryptEcDhSecretAgreement")
 
+        // Utility functions
+        .allowlist_function("^(SymCryptHash.*)$")
 
+        // For testing
+        .allowlist_var("SymCryptSha256Algorithm")
+
+        .derive_default(true)
         .generate()
         .expect("Unable to generate bindings");
 
-    // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))
