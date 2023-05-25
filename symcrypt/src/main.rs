@@ -3,9 +3,6 @@ use symcrypt::*;
 fn main() {
     println!("Testing sha256! \n\n");
 
-
-
-
     let data = b"this is a test";
     let mut result: [u8; 32] = [0; 32];
     sha256(data, &mut result);
@@ -42,17 +39,4 @@ fn main() {
     //     println!("{:?}", result);
         
     // }
-    //&my_struct as *const _
 }
-
-// 0:000> dq 0x7ff7763ddf90
-// 00007ff7`763ddf90  25ff0000`235225ff 233e25ff`00002304
-// 00007ff7`763ddfa0  00002330`25ff0000 25ff0000`232225ff
-// 00007ff7`763ddfb0  230625ff`00002314 000022f8`25ff0000
-// 00007ff7`763ddfc0  25ff0000`22e225ff 207625ff`000022e4
-// 00007ff7`763ddfd0  000020a0`25ff0000 25ff0000`20a225ff
-// 00007ff7`763ddfe0  211625ff`000020ac 00002118`25ff0000
-// 00007ff7`763ddff0  cccc0000`211a25ff 01b920ec`83485340
-// 00007ff7`763de000  00000b19`e8000000 e8c88b00`0005fbe8
-
-// TODO: confirm size of Sha256 structure matches what is actually used

@@ -121,7 +121,8 @@ pub fn check_hash_size() -> symcrypt_sys::SIZE_T {
     let mut result: u64 = 0;
     unsafe{
         //symcrypt_sys::SymCryptSha256Algorithm
-       result = symcrypt_sys::SymCryptHashStateSize(symcrypt_sys::SymCryptSha256Algorithm); //phash
+       result = symcrypt_sys::SymCryptHashStateSize(symcrypt_sys::SymCryptSha256Algorithm); //pHash
+       // TODO: Find why this is breaking. Unable to find de-reference pointer
     }
     result
 }
