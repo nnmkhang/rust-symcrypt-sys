@@ -1,4 +1,9 @@
 use symcrypt_sys::*;
+use core::ffi::c_void;
+
+pub const SHA256_LENGTH: usize = 32;
+pub const SHA384_LENGTH: usize = 48;
+
 
 pub struct SymCryptInit;
 impl SymCryptInit {
@@ -11,21 +16,20 @@ impl SymCryptInit {
 }
 
 pub struct Sha256State {
-    pub state: symcrypt_sys::_SYMCRYPT_SHA256_STATE // keep as pub? Debug trait exists on _SYMCRYPT_SHA256_STATE already
+    pub state: symcrypt_sys::_SYMCRYPT_SHA256_STATE
 } 
 
 impl Sha256State { // Sha256State 
     pub fn new() -> Self {
             let mut instance = Sha256State {
                 state: symcrypt_sys::_SYMCRYPT_SHA256_STATE::default()
-
             };
             unsafe {
                 symcrypt_sys::SymCryptSha256Init(&mut instance.state);
             }
         instance
     }
-    
+
     pub fn append(&mut self, data: &[u8] ) {
         unsafe {
             symcrypt_sys::SymCryptSha256Append(
@@ -36,7 +40,7 @@ impl Sha256State { // Sha256State
         }
     }
 
-    pub fn result(&mut self, result: &mut [u8; 32]) {
+    pub fn result(&mut self, result: &mut [u8; SHA256_LENGTH]) {
         unsafe {
             symcrypt_sys::SymCryptSha256Result(&mut self.state, result.as_mut_ptr())
         }
@@ -49,6 +53,16 @@ impl Drop for Sha256State {
         unsafe {
             std::ptr::write_volatile(&mut self.state, std::mem::zeroed());
         }
+    }
+}
+
+pub fn sha256(data: &[u8], result: &mut [u8; SHA256_LENGTH]) {
+    unsafe {
+        symcrypt_sys::SymCryptSha256(
+            data.as_ptr(), // pbData
+            data.len() as symcrypt_sys::SIZE_T, // cbData
+            result.as_mut_ptr(), // pbResult
+        );
     }
 }
 
@@ -77,7 +91,7 @@ impl Sha384State {
         }
     }
 
-    pub fn result(&mut self, result: &mut [u8; 48]) {
+    pub fn result(&mut self, result: &mut [u8; SHA384_LENGTH]) {
         unsafe {
             symcrypt_sys::SymCryptSha384Result(&mut self.state, result.as_mut_ptr())
         }
@@ -88,25 +102,13 @@ impl Drop for Sha384State {
     fn drop(&mut self) {
         // Zero out the memory for state
         unsafe {
+            // TODO: switch to SymCryptWipe
             std::ptr::write_volatile(&mut self.state, std::mem::zeroed());
         }
     }
 }
 
-
-// Stateless Hash Functions:
-
-pub fn sha256(data: &[u8], result: &mut [u8; 32]) {
-    unsafe {
-        symcrypt_sys::SymCryptSha256(
-            data.as_ptr(), // pbData
-            data.len() as symcrypt_sys::SIZE_T, // cbData
-            result.as_mut_ptr(), // pbResult
-        );
-    }
-}
-
-pub fn sha384(data: &[u8], result: &mut [u8; 48]) {
+pub fn sha384(data: &[u8], result: &mut [u8; SHA384_LENGTH]) {
     unsafe {
         symcrypt_sys::SymCryptSha384(
             data.as_ptr(), // pbData

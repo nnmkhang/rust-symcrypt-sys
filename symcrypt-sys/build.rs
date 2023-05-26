@@ -70,10 +70,12 @@ fn main() {
 
         // Utility functions
         .allowlist_function("^(SymCryptHash.*)$")
+        .allowlist_function("SymCryptWipe")
 
         // For testing
         .allowlist_var("SymCryptSha256Algorithm")
 
+        .generate_comments(true)
         .derive_default(true)
         .generate()
         .expect("Unable to generate bindings");

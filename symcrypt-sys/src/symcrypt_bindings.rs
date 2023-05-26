@@ -3354,6 +3354,9 @@ pub type SYMCRYPT_ECKEY = _SYMCRYPT_ECKEY;
 pub type PSYMCRYPT_ECKEY = *mut SYMCRYPT_ECKEY;
 pub type PCSYMCRYPT_ECKEY = *const SYMCRYPT_ECKEY;
 extern "C" {
+    pub fn SymCryptWipe(pbData: PVOID, cbData: SIZE_T);
+}
+extern "C" {
     pub fn SymCryptInit();
 }
 extern "C" {
@@ -3423,9 +3426,6 @@ extern "C" {
 extern "C" {
     pub fn SymCryptSha256Selftest();
 }
-// extern "C" {
-//     pub fn SymCryptSha256Algorithm(pbData: PCBYTE, cbData: SIZE_T, pbResult: PBYTE);
-// }
 extern "C" {
     pub static SymCryptSha256Algorithm: PCSYMCRYPT_HASH;
 }
