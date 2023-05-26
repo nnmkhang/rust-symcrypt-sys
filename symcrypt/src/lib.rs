@@ -1,8 +1,8 @@
 use symcrypt_sys::*;
 use core::ffi::c_void;
 
-pub const SHA256_LENGTH: usize = 32;
-pub const SHA384_LENGTH: usize = 48;
+pub const SHA256_RESULT_SIZE: usize = 32;
+pub const SHA384_RESULT_SIZE: usize = 48;
 
 
 pub struct SymCryptInit;
@@ -40,7 +40,7 @@ impl Sha256State { // Sha256State
         }
     }
 
-    pub fn result(&mut self, result: &mut [u8; SHA256_LENGTH]) {
+    pub fn result(&mut self, result: &mut [u8; SHA256_RESULT_SIZE]) {
         unsafe {
             symcrypt_sys::SymCryptSha256Result(&mut self.state, result.as_mut_ptr())
         }
@@ -56,7 +56,7 @@ impl Drop for Sha256State {
     }
 }
 
-pub fn sha256(data: &[u8], result: &mut [u8; SHA256_LENGTH]) {
+pub fn sha256(data: &[u8], result: &mut [u8; SHA256_RESULT_SIZE]) {
     unsafe {
         symcrypt_sys::SymCryptSha256(
             data.as_ptr(), // pbData
@@ -91,7 +91,7 @@ impl Sha384State {
         }
     }
 
-    pub fn result(&mut self, result: &mut [u8; SHA384_LENGTH]) {
+    pub fn result(&mut self, result: &mut [u8; SHA384_RESULT_SIZE]) {
         unsafe {
             symcrypt_sys::SymCryptSha384Result(&mut self.state, result.as_mut_ptr())
         }
@@ -108,7 +108,7 @@ impl Drop for Sha384State {
     }
 }
 
-pub fn sha384(data: &[u8], result: &mut [u8; SHA384_LENGTH]) {
+pub fn sha384(data: &[u8], result: &mut [u8; SHA384_RESULT_SIZE]) {
     unsafe {
         symcrypt_sys::SymCryptSha384(
             data.as_ptr(), // pbData
