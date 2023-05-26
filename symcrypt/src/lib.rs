@@ -1,8 +1,8 @@
 use symcrypt_sys::*;
 use core::ffi::c_void;
 
-pub const SHA256_RESULT_SIZE: usize = 32;
-pub const SHA384_RESULT_SIZE: usize = 48;
+pub const SHA256_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA256_RESULT_SIZE as usize;
+pub const SHA384_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA384_RESULT_SIZE as usize;
 
 
 pub struct SymCryptInit;

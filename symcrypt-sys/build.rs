@@ -40,6 +40,8 @@ fn main() {
         // HASH FUNCTIONS 
         .allowlist_function("^(SymCryptSha256.*)$")
         .allowlist_function("^(SymCryptSha384.*)$")
+        .allowlist_var("SYMCRYPT_SHA256_RESULT_SIZE")
+        .allowlist_var("SYMCRYPT_SHA384_RESULT_SIZE")
 
         // HMAC FUNCTIONS
         .allowlist_function("^(SymCryptHmacSha256.*)$")
