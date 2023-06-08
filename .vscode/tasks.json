@@ -8,7 +8,7 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
-                "-LD:\\rust\\pfx_leak\\rust-symcrypt-sys\\mickey_mouse\\",
+                "-LD:\\rust\\pfx_leak\\rust-symcrypt-sys\\mickey-mouse\\",
                 "-lsymcrypttestmodule",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"

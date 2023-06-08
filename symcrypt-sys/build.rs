@@ -7,7 +7,7 @@ fn main() {
     #[cfg(target_os = "windows")] 
     {
         
-        println!("cargo:rustc-link-search=native=./../mickey_mouse/"); // ! Work around, looking for better solution
+        println!("cargo:rustc-link-search=native=./../mickey-mouse/"); // ! Work around, looking for better solution
         println!("cargo:libdir=./inc");
         println!("cargo:rustc-link-lib=dylib=symcrypttestmodule"); // test module used in lieu of official symcrypt dll
         // this dll will be in Windows/System32. This is to mirror future plans; as symcrypt is planned to ship with windows
