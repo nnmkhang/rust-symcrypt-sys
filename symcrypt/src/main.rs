@@ -31,11 +31,13 @@ fn main() {
     Sha384State::result(&mut sha_test, &mut result);
     println!("SHA384 state hash: {:?}", result);
 
-
-    // unsafe{
-    //     println!("{:?}", (SymCryptSha256Algorithm).try_into()); //0x25ff0000234225ff
-    //     println!("{:?}", SymCryptHashStateSize as *const());
-    //     let result = check_hash_size();
-    //     println!("{:?}", result);
-    // }
+ // 00007ffe`7ce3a560
+    // 7ff75474ded0
+    // 00007ff7`5473203d 
+    unsafe{
+        println!("{:?}", (symcrypt_sys::SymCryptSha256Algorithm)); //0x25ff0000234225ff
+        //println!("{:?}", SymCryptHashStateSize as *const());
+        let result = check_hash_size();
+        //println!("{:?}", result);
+    }
 }

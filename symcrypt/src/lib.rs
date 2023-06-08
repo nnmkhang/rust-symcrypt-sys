@@ -1,5 +1,7 @@
 use symcrypt_sys::*;
 use core::ffi::c_void;
+use std::{ptr,};
+use std::mem;
 
 pub const SHA256_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA256_RESULT_SIZE as usize;
 pub const SHA384_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA384_RESULT_SIZE as usize;
@@ -9,7 +11,7 @@ pub struct SymCryptInit;
 impl SymCryptInit {
     pub fn new () {
         unsafe { 
-            // symcrypt_sys::SymCryptInit(); 
+            //symcrypt_sys::SymCryptInit(); 
             // TODO: Find out why SymCryptInit() breaks on linux / windows (BREAKING)
         }
     }
@@ -22,7 +24,7 @@ pub struct Sha256State {
 impl Sha256State { // Sha256State 
     pub fn new() -> Self {
             let mut instance = Sha256State {
-                state: symcrypt_sys::_SYMCRYPT_SHA256_STATE::default()
+                state: symcrypt_sys::_SYMCRYPT_SHA256_STATE::default() // have to make a new one with all zeros first, 
             };
             unsafe {
                 symcrypt_sys::SymCryptSha256Init(&mut instance.state);
@@ -102,8 +104,9 @@ impl Drop for Sha384State {
     fn drop(&mut self) {
         // Zero out the memory for state
         unsafe {
-            // TODO: switch to SymCryptWipe
-            std::ptr::write_volatile(&mut self.state, std::mem::zeroed());
+            // TODO: create a is_dirty that checks if result was called , if not call the wipe 
+            symcrypt_sys::SymCryptWipe( ptr::addr_of_mut!(self.state) as *mut c_void, mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T)
+
         }
     }
 }
@@ -118,12 +121,16 @@ pub fn sha384(data: &[u8], result: &mut [u8; SHA384_RESULT_SIZE]) {
     }
 }
 
+
 // For testing
 pub fn check_hash_size() -> symcrypt_sys::SIZE_T {
     let mut result: u64 = 0;
+    let mut result2: u64 = 0;
+
     unsafe{
         // symcrypt_sys::SymCryptSha256Algorithm
         result = symcrypt_sys::SymCryptHashStateSize(symcrypt_sys::SymCryptSha256Algorithm); //pHash
+        result2 = symcrypt_sys::SymCryptHashStateSize(symcrypt_sys::SymCryptSha384Algorithm)
         // TODO: Find why this is breaking. Unable to find de-reference pointer
     }
     result
