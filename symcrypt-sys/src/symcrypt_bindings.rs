@@ -3441,7 +3441,6 @@ extern "C" {
 extern "C" {
     pub fn SymCryptSha384Append(pState: PSYMCRYPT_SHA384_STATE, pbData: PCBYTE, cbData: SIZE_T);
 }
-#[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub fn SymCryptSha384Result(pState: PSYMCRYPT_SHA384_STATE, pbResult: PBYTE);
 }
@@ -3460,6 +3459,8 @@ extern "C" {
 extern "C" {
     pub fn SymCryptSha384Selftest();
 }
+
+#[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptSha384Algorithm: PCSYMCRYPT_HASH;
 }
@@ -3943,9 +3944,13 @@ extern "C" {
 extern "C" {
     pub fn SymCryptEcurveIsSame(pCurve1: PCSYMCRYPT_ECURVE, pCurve2: PCSYMCRYPT_ECURVE) -> BOOLEAN;
 }
+
+#[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptEcurveParamsNistP256: PCSYMCRYPT_ECURVE_PARAMS;
 }
+
+#[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptEcurveParamsNistP384: PCSYMCRYPT_ECURVE_PARAMS;
 }
