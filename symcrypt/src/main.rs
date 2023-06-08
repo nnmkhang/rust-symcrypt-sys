@@ -9,7 +9,6 @@ fn main() {
     println!("SHA256 stateless hash: {:?}", result);
 
     let mut sha_test = Sha256State::new();
-    println!("State for sha_test = {:?}", sha_test.state);
 
     let mut result: [u8; SHA256_RESULT_SIZE] = [0; SHA256_RESULT_SIZE];
     Sha256State::append(&mut sha_test, b"this is a test");
@@ -24,20 +23,10 @@ fn main() {
     println!("SHA384 stateless hash: {:?}", result);
 
     let mut sha_test = Sha384State::new();
-    println!("State for sha_test = {:?}", sha_test.state);
 
     let mut result: [u8; SHA384_RESULT_SIZE] = [0; SHA384_RESULT_SIZE];
     Sha384State::append(&mut sha_test, b"this is a test");
     Sha384State::result(&mut sha_test, &mut result);
     println!("SHA384 state hash: {:?}", result);
 
- // 00007ffe`7ce3a560
-    // 7ff75474ded0
-    // 00007ff7`5473203d 
-    unsafe{
-        println!("{:?}", (symcrypt_sys::SymCryptSha256Algorithm)); //0x25ff0000234225ff
-        //println!("{:?}", SymCryptHashStateSize as *const());
-        let result = check_hash_size();
-        //println!("{:?}", result);
-    }
 }

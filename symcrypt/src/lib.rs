@@ -1,6 +1,6 @@
-use symcrypt_sys::*;
+use symcrypt_sys;
 use core::ffi::c_void;
-use std::{ptr,};
+use std::{ptr};
 use std::mem;
 
 pub const SHA256_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA256_RESULT_SIZE as usize;
@@ -18,13 +18,15 @@ impl SymCryptInit {
 }
 
 pub struct Sha256State {
-    pub state: symcrypt_sys::_SYMCRYPT_SHA256_STATE
+    state: symcrypt_sys::_SYMCRYPT_SHA256_STATE,
+    is_dirty: bool
 } 
 
 impl Sha256State { // Sha256State 
     pub fn new() -> Self {
             let mut instance = Sha256State {
-                state: symcrypt_sys::_SYMCRYPT_SHA256_STATE::default() // have to make a new one with all zeros first, 
+                state: symcrypt_sys::_SYMCRYPT_SHA256_STATE::default(),
+                is_dirty: true
             };
             unsafe {
                 symcrypt_sys::SymCryptSha256Init(&mut instance.state);
@@ -44,16 +46,20 @@ impl Sha256State { // Sha256State
 
     pub fn result(&mut self, result: &mut [u8; SHA256_RESULT_SIZE]) {
         unsafe {
-            symcrypt_sys::SymCryptSha256Result(&mut self.state, result.as_mut_ptr())
+            symcrypt_sys::SymCryptSha256Result(&mut self.state, result.as_mut_ptr());
         }
+        self.is_dirty = false;
     }
 }
 
 impl Drop for Sha256State {
     fn drop(&mut self) {
-        // Zero out the memory for state
-        unsafe {
-            std::ptr::write_volatile(&mut self.state, std::mem::zeroed());
+        if self.is_dirty {
+            unsafe {
+                symcrypt_sys::SymCryptWipe( 
+                ptr::addr_of_mut!(self.state) as *mut c_void, 
+                mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T)
+            }
         }
     }
 }
@@ -69,13 +75,15 @@ pub fn sha256(data: &[u8], result: &mut [u8; SHA256_RESULT_SIZE]) {
 }
 
 pub struct Sha384State {
-    pub state: symcrypt_sys::_SYMCRYPT_SHA384_STATE
+    state: symcrypt_sys::_SYMCRYPT_SHA384_STATE,
+    is_dirty: bool
 }
 
 impl Sha384State {
     pub fn new() -> Self {
         let mut instance = Sha384State {
-            state: symcrypt_sys::_SYMCRYPT_SHA384_STATE::default()
+            state: symcrypt_sys::_SYMCRYPT_SHA384_STATE::default(),
+            is_dirty: true
         };
         unsafe {
             symcrypt_sys::SymCryptSha384Init(&mut instance.state);
@@ -95,18 +103,20 @@ impl Sha384State {
 
     pub fn result(&mut self, result: &mut [u8; SHA384_RESULT_SIZE]) {
         unsafe {
-            symcrypt_sys::SymCryptSha384Result(&mut self.state, result.as_mut_ptr())
+            symcrypt_sys::SymCryptSha384Result(&mut self.state, result.as_mut_ptr());
         }
+        self.is_dirty = false;
     }
 }
 
 impl Drop for Sha384State {
     fn drop(&mut self) {
-        // Zero out the memory for state
-        unsafe {
-            // TODO: create a is_dirty that checks if result was called , if not call the wipe 
-            symcrypt_sys::SymCryptWipe( ptr::addr_of_mut!(self.state) as *mut c_void, mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T)
-
+        if self.is_dirty {
+            unsafe {
+                symcrypt_sys::SymCryptWipe(
+                ptr::addr_of_mut!(self.state) as *mut c_void,
+                mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T)
+            }
         }
     }
 }
@@ -121,17 +131,11 @@ pub fn sha384(data: &[u8], result: &mut [u8; SHA384_RESULT_SIZE]) {
     }
 }
 
-
-// For testing
-pub fn check_hash_size() -> symcrypt_sys::SIZE_T {
-    let mut result: u64 = 0;
-    let mut result2: u64 = 0;
-
-    unsafe{
-        // symcrypt_sys::SymCryptSha256Algorithm
-        result = symcrypt_sys::SymCryptHashStateSize(symcrypt_sys::SymCryptSha256Algorithm); //pHash
-        result2 = symcrypt_sys::SymCryptHashStateSize(symcrypt_sys::SymCryptSha384Algorithm)
-        // TODO: Find why this is breaking. Unable to find de-reference pointer
+// Utility Functions
+pub fn check_hash_size(hash: symcrypt_sys::PCSYMCRYPT_HASH) -> symcrypt_sys::SIZE_T {
+    let mut result: symcrypt_sys::SIZE_T = 0;
+    unsafe {
+        result = symcrypt_sys::SymCryptHashStateSize(hash); //pHash
     }
     result
 }

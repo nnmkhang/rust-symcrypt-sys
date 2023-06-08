@@ -3428,7 +3428,7 @@ extern "C" {
 extern "C" {
     pub fn SymCryptSha256Selftest();
 }
-#[no_mangle]
+#[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptSha256Algorithm: PCSYMCRYPT_HASH;
 }
@@ -3441,7 +3441,7 @@ extern "C" {
 extern "C" {
     pub fn SymCryptSha384Append(pState: PSYMCRYPT_SHA384_STATE, pbData: PCBYTE, cbData: SIZE_T);
 }
-#[no_mangle]
+#[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub fn SymCryptSha384Result(pState: PSYMCRYPT_SHA384_STATE, pbResult: PBYTE);
 }
