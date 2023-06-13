@@ -28,5 +28,4 @@ fn main() {
     Sha384State::append(&mut sha_test, b"this is a test");
     Sha384State::result(&mut sha_test, &mut result);
     println!("SHA384 state hash: {:?}", result);
-
 }
