@@ -17,7 +17,7 @@ impl SymCryptInit {
 }
 
 pub struct Sha256State {
-    state: symcrypt_sys::_SYMCRYPT_SHA256_STATE,
+    state: symcrypt_sys::SYMCRYPT_SHA256_STATE,
     is_dirty: bool,
 }
 
@@ -25,7 +25,7 @@ impl Sha256State {
     // Sha256State
     pub fn new() -> Self {
         let mut instance = Sha256State {
-            state: symcrypt_sys::_SYMCRYPT_SHA256_STATE::default(),
+            state: symcrypt_sys::SYMCRYPT_SHA256_STATE::default(),
             is_dirty: false,
         };
         unsafe {
@@ -77,14 +77,14 @@ pub fn sha256(data: &[u8], result: &mut [u8; SHA256_RESULT_SIZE]) {
 }
 
 pub struct Sha384State {
-    state: symcrypt_sys::_SYMCRYPT_SHA384_STATE,
+    state: symcrypt_sys::SYMCRYPT_SHA384_STATE,
     is_dirty: bool,
 }
 
 impl Sha384State {
     pub fn new() -> Self {
         let mut instance = Sha384State {
-            state: symcrypt_sys::_SYMCRYPT_SHA384_STATE::default(),
+            state: symcrypt_sys::SYMCRYPT_SHA384_STATE::default(),
             is_dirty: false,
         };
         unsafe {

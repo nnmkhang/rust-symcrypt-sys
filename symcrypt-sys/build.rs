@@ -20,6 +20,7 @@ fn main() {
 
         // TODO: Create a script that copies all libsymcrypt.so* files from SymCrypt path to /lib/x86_64-linux-gnu/
         // The ld linker will look for the symcrypt.so files within /lib/x86_64-linux-gnu/. No need to set a hardcoded path.
+        // This is not needed on Mariner as it comes with SymCrypt out of the box. 
     }
 
     // TODO: Factor out binding generation. Bindgen should only be run manually with updates to underlying SymCrypt code that 
