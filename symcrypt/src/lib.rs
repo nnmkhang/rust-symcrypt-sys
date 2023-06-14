@@ -18,7 +18,6 @@ impl SymCryptInit {
 
 pub struct Sha256State {
     state: symcrypt_sys::SYMCRYPT_SHA256_STATE,
-    is_dirty: bool,
 }
 
 impl Sha256State {
@@ -26,7 +25,6 @@ impl Sha256State {
     pub fn new() -> Self {
         let mut instance = Sha256State {
             state: symcrypt_sys::SYMCRYPT_SHA256_STATE::default(),
-            is_dirty: false,
         };
         unsafe {
             symcrypt_sys::SymCryptSha256Init(&mut instance.state);
@@ -42,26 +40,22 @@ impl Sha256State {
                 data.len() as symcrypt_sys::SIZE_T, // cbData
             );
         }
-        self.is_dirty = true;
     }
 
     pub fn result(&mut self, result: &mut [u8; SHA256_RESULT_SIZE]) {
         unsafe {
             symcrypt_sys::SymCryptSha256Result(&mut self.state, result.as_mut_ptr());
         }
-        self.is_dirty = false;
     }
 }
 
 impl Drop for Sha256State {
     fn drop(&mut self) {
-        if self.is_dirty {
-            unsafe {
-                symcrypt_sys::SymCryptWipe(
-                    ptr::addr_of_mut!(self.state) as *mut c_void,
-                    mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T,
-                )
-            }
+        unsafe {
+            symcrypt_sys::SymCryptWipe(
+                ptr::addr_of_mut!(self.state) as *mut c_void,
+                mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T,
+            )
         }
     }
 }
@@ -78,14 +72,12 @@ pub fn sha256(data: &[u8], result: &mut [u8; SHA256_RESULT_SIZE]) {
 
 pub struct Sha384State {
     state: symcrypt_sys::SYMCRYPT_SHA384_STATE,
-    is_dirty: bool,
 }
 
 impl Sha384State {
     pub fn new() -> Self {
         let mut instance = Sha384State {
             state: symcrypt_sys::SYMCRYPT_SHA384_STATE::default(),
-            is_dirty: false,
         };
         unsafe {
             symcrypt_sys::SymCryptSha384Init(&mut instance.state);
@@ -101,26 +93,22 @@ impl Sha384State {
                 data.len() as symcrypt_sys::SIZE_T, // cbData
             );
         }
-        self.is_dirty = true;
     }
 
     pub fn result(&mut self, result: &mut [u8; SHA384_RESULT_SIZE]) {
         unsafe {
             symcrypt_sys::SymCryptSha384Result(&mut self.state, result.as_mut_ptr());
         }
-        self.is_dirty = false;
     }
 }
 
 impl Drop for Sha384State {
     fn drop(&mut self) {
-        if self.is_dirty {
-            unsafe {
-                symcrypt_sys::SymCryptWipe(
-                    ptr::addr_of_mut!(self.state) as *mut c_void,
-                    mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T,
-                )
-            }
+        unsafe {
+            symcrypt_sys::SymCryptWipe(
+                ptr::addr_of_mut!(self.state) as *mut c_void,
+                mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T,
+            )
         }
     }
 }
