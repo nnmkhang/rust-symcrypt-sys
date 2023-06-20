@@ -1,4 +1,5 @@
 /target
-/symcrypt/target
 /symcrypt-sys/target
+/symcrypt
+/rust-symcrypt/target
 .vscode/
