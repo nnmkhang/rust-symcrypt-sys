@@ -1,0 +1,4 @@
+/target
+/symcrypt/target
+/symcrypt-sys/target
+.vscode/
