@@ -15,7 +15,7 @@ fn main() {
     
     #[cfg(target_os = "linux")]
     {   
-        println!("cargo:libdir=../SymCrypt/inc");
+        println!("cargo:libdir=../symcrypt/inc");
         println!("cargo:rustc-link-lib=dylib=symcrypt"); // the lib prefix for libsymcrypt is implied on linux
 
         // TODO: Create a script that copies all libsymcrypt.so* files from SymCrypt path to /lib/x86_64-linux-gnu/
