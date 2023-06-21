@@ -2,4 +2,5 @@
 #include <stddef.h>
 #endif
 
-#include "symcrypt.h"
+
+#include "../SymCrypt/inc/symcrypt.h"
