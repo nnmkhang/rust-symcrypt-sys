@@ -3439,6 +3439,10 @@ extern "C" {
 extern "C" {
     pub static SymCryptSha256Algorithm: PCSYMCRYPT_HASH;
 }
+#[cfg(target_os = "linux")] 
+extern "C" {
+    pub static SymCryptSha256Algorithm: PCSYMCRYPT_HASH;
+}
 extern "C" {
     pub fn SymCryptSha384(pbData: PCBYTE, cbData: SIZE_T, pbResult: PBYTE);
 }
@@ -3469,6 +3473,10 @@ extern "C" {
 
 #[cfg(target_os = "windows")] 
 #[link(name = "symcrypttestmodule", kind = "dylib")]
+extern "C" {
+    pub static SymCryptSha384Algorithm: PCSYMCRYPT_HASH;
+}
+#[cfg(target_os = "linux")] 
 extern "C" {
     pub static SymCryptSha384Algorithm: PCSYMCRYPT_HASH;
 }
