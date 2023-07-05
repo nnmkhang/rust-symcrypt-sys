@@ -116,6 +116,7 @@ pub fn sha384(data: &[u8], result: &mut [u8; SHA384_RESULT_SIZE]) {
 mod test {
     use super::*;
     use std::mem::size_of;
+    #[cfg(target_os = "windows")]
     use symcrypt_sys::{SymCryptSha256Algorithm, SymCryptSha384Algorithm};
 
     fn check_hash_size(hash: symcrypt_sys::PCSYMCRYPT_HASH) -> symcrypt_sys::SIZE_T {
@@ -170,6 +171,7 @@ mod test {
         assert_eq!(hex::encode(result), expected);
     }
 
+    #[cfg(target_os = "windows")]
     #[test]
     fn check_state_size() {
         unsafe {
