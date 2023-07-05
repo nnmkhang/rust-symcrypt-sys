@@ -3466,6 +3466,12 @@ extern "C" {
 extern "C" {
     pub fn SymCryptSha384Selftest();
 }
+
+#[cfg(target_os = "windows")] 
+#[link(name = "symcrypttestmodule", kind = "dylib")]
+extern "C" {
+    pub static SymCryptSha384Algorithm: PCSYMCRYPT_HASH;
+}
 extern "C" {
     pub fn SymCryptHmacSha256ExpandKey(
         pExpandedKey: PSYMCRYPT_HMAC_SHA256_EXPANDED_KEY,
@@ -3559,12 +3565,6 @@ extern "C" {
 }
 extern "C" {
     pub fn SymCryptHmacSha384Selftest();
-}
-
-#[cfg(target_os = "windows")] 
-#[link(name = "symcrypttestmodule", kind = "dylib")]
-extern "C" {
-    pub static SymCryptHmacSha384Algorithm: PCSYMCRYPT_MAC;
 }
 extern "C" {
     pub fn SymCryptChaCha20Poly1305Encrypt(
