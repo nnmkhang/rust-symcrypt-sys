@@ -23,6 +23,10 @@ fn main() {
         // This is not needed on Mariner as it comes with SymCrypt out of the box. 
     }
 
+    // Since we are pulling in symcrypt as a submodule, it should be pretty easy to run a vendored build, this would allow us 
+    // to hard stop at a commit and ensure that there is no discrepancy between build version and header version
+
+
     // TODO: Factor out binding generation. Bindgen should only be run manually with updates to underlying SymCrypt code that 
     // we decide what to take.
     println!("cargo:rerun-if-changed=inc/wrapper.h");
@@ -36,7 +40,8 @@ fn main() {
         // ALLOWLIST 
 
         // INIT FUNCTIONS
-        .allowlist_function("SymCryptInit")
+        .allowlist_function("SymCryptModuleInit")
+        .allowlist_var("^(SYMCRYPT_CODE_VERSION.*)$")
 
         // HASH FUNCTIONS 
         .allowlist_function("^(SymCryptSha256.*)$")
@@ -78,6 +83,8 @@ fn main() {
         // For testing
         .allowlist_var("SymCryptSha256Algorithm")
         .allowlist_var("SymCryptSha384Algorithm")
+        .allowlist_var("SymCryptHmacSha256Algorithm")
+        .allowlist_var("SymCryptHmacSha384Algorithm")
 
         .generate_comments(true)
         .derive_default(true)

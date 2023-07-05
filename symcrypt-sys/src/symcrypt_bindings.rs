@@ -2,6 +2,8 @@
 
 pub const SYMCRYPT_SHA256_RESULT_SIZE: u32 = 32;
 pub const SYMCRYPT_SHA384_RESULT_SIZE: u32 = 48;
+pub const SYMCRYPT_CODE_VERSION_API: u32 = 103;
+pub const SYMCRYPT_CODE_VERSION_MINOR: u32 = 1;
 pub const SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR: SYMCRYPT_ERROR = 0;
 pub const SYMCRYPT_ERROR_SYMCRYPT_UNUSED: SYMCRYPT_ERROR = 32768;
 pub const SYMCRYPT_ERROR_SYMCRYPT_WRONG_KEY_SIZE: SYMCRYPT_ERROR = 32769;
@@ -3362,6 +3364,9 @@ extern "C" {
     pub fn SymCryptInit();
 }
 extern "C" {
+    pub fn SymCryptModuleInit(api: UINT32, minor: UINT32);
+}
+extern "C" {
     pub fn SymCryptHashResultSize(pHash: PCSYMCRYPT_HASH) -> SIZE_T;
 }
 extern "C" {
@@ -3461,12 +3466,6 @@ extern "C" {
 extern "C" {
     pub fn SymCryptSha384Selftest();
 }
-
-#[cfg(target_os = "windows")] 
-#[link(name = "symcrypttestmodule", kind = "dylib")]
-extern "C" {
-    pub static SymCryptSha384Algorithm: PCSYMCRYPT_HASH;
-}
 extern "C" {
     pub fn SymCryptHmacSha256ExpandKey(
         pExpandedKey: PSYMCRYPT_HMAC_SHA256_EXPANDED_KEY,
@@ -3560,6 +3559,12 @@ extern "C" {
 }
 extern "C" {
     pub fn SymCryptHmacSha384Selftest();
+}
+
+#[cfg(target_os = "windows")] 
+#[link(name = "symcrypttestmodule", kind = "dylib")]
+extern "C" {
+    pub static SymCryptHmacSha384Algorithm: PCSYMCRYPT_MAC;
 }
 extern "C" {
     pub fn SymCryptChaCha20Poly1305Encrypt(
