@@ -83,8 +83,6 @@ fn main() {
         // For testing
         .allowlist_var("SymCryptSha256Algorithm")
         .allowlist_var("SymCryptSha384Algorithm")
-        .allowlist_var("SymCryptHmacSha256Algorithm")
-        .allowlist_var("SymCryptHmacSha384Algorithm")
 
         .generate_comments(true)
         .derive_default(true)
