@@ -10,7 +10,7 @@ pub trait Hash {
     type Result;
 
     fn append(&mut self, data: &[u8]);
-    fn result(&mut self, result: &mut Self::Result);
+    fn result(&mut self) -> Self::Result;
 }
 
 pub struct Sha256State {
@@ -42,10 +42,12 @@ impl Hash for Sha256State {
         }
     }
 
-    fn result(&mut self, result: &mut [u8; SHA256_RESULT_SIZE]) {
+    fn result(&mut self) -> Self::Result {
+        let mut result = [0u8; SHA256_RESULT_SIZE];
         unsafe {
             symcrypt_sys::SymCryptSha256Result(&mut self.state, result.as_mut_ptr());
         }
+        result
     }
 }
 
@@ -99,10 +101,12 @@ impl Hash for Sha384State {
         }
     }
 
-    fn result(&mut self, result: &mut [u8; SHA384_RESULT_SIZE]) {
+    fn result(&mut self) -> Self::Result {
+        let mut result = [0u8; SHA384_RESULT_SIZE];
         unsafe {
             symcrypt_sys::SymCryptSha384Result(&mut self.state, result.as_mut_ptr());
         }
+        result
     }
 }
 
@@ -145,14 +149,13 @@ mod test {
     fn test_generic_hash_state<H: Hash>(
         mut hash_state: H,
         data: &[u8],
-        result_buf: &mut H::Result,
         expected: &str,
     ) where
         H::Result: AsRef<[u8]>,
     {
         hash_state.append(data);
-        hash_state.result(result_buf);
-        assert_eq!(hex::encode(result_buf), expected);
+        let result = hash_state.result();
+        assert_eq!(hex::encode(result), expected);
     }
 
     #[test]
@@ -173,7 +176,6 @@ mod test {
         test_generic_hash_state(
             Sha256State::new(),
             &data,
-            &mut [0; SHA256_RESULT_SIZE],
             expected,
         );
     }
@@ -196,7 +198,6 @@ mod test {
         test_generic_hash_state(
             Sha384State::new(),
             &data,
-            &mut [0; SHA384_RESULT_SIZE],
             expected,
         );
     }
