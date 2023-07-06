@@ -3434,12 +3434,12 @@ extern "C" {
     pub fn SymCryptSha256Selftest();
 }
 
-#[cfg(target_os = "windows")] 
+#[cfg(target_os = "windows")]
 #[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptSha256Algorithm: PCSYMCRYPT_HASH;
 }
-#[cfg(target_os = "linux")] 
+#[cfg(target_os = "linux")]
 extern "C" {
     pub static SymCryptSha256Algorithm: PCSYMCRYPT_HASH;
 }
@@ -3471,12 +3471,12 @@ extern "C" {
     pub fn SymCryptSha384Selftest();
 }
 
-#[cfg(target_os = "windows")] 
+#[cfg(target_os = "windows")]
 #[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptSha384Algorithm: PCSYMCRYPT_HASH;
 }
-#[cfg(target_os = "linux")] 
+#[cfg(target_os = "linux")]
 extern "C" {
     pub static SymCryptSha384Algorithm: PCSYMCRYPT_HASH;
 }
@@ -3961,13 +3961,13 @@ extern "C" {
     pub fn SymCryptEcurveIsSame(pCurve1: PCSYMCRYPT_ECURVE, pCurve2: PCSYMCRYPT_ECURVE) -> BOOLEAN;
 }
 
-#[cfg(target_os = "windows")] 
+#[cfg(target_os = "windows")]
 #[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptEcurveParamsNistP256: PCSYMCRYPT_ECURVE_PARAMS;
 }
 
-#[cfg(target_os = "windows")] 
+#[cfg(target_os = "windows")]
 #[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptEcurveParamsNistP384: PCSYMCRYPT_ECURVE_PARAMS;

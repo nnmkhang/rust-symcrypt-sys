@@ -19,11 +19,11 @@ impl HmacSha256State {
         };
         unsafe {
             symcrypt_sys::SymCryptHmacSha256ExpandKey(
-                &mut instance.expanded_key,        // pExpandedKey
-                key.as_ptr(),                      // pbKey
-                key.len() as symcrypt_sys::SIZE_T, // cbKey
+                &mut instance.expanded_key,
+                key.as_ptr(),
+                key.len() as symcrypt_sys::SIZE_T,
             );
-            symcrypt_sys::SymCryptHmacSha256Init(&mut instance.state, &mut instance.expanded_key);
+            symcrypt_sys::SymCryptHmacSha256Init(&mut instance.state, &instance.expanded_key);
         }
         instance
     }
@@ -31,9 +31,9 @@ impl HmacSha256State {
     pub fn append(&mut self, data: &[u8]) {
         unsafe {
             symcrypt_sys::SymCryptHmacSha256Append(
-                &mut self.state,                    // pState
-                data.as_ptr(),                      // pbData
-                data.len() as symcrypt_sys::SIZE_T, // cbData
+                &mut self.state,
+                data.as_ptr(),
+                data.len() as symcrypt_sys::SIZE_T,
             )
         }
     }
@@ -65,15 +65,15 @@ pub fn hmac256(key: &[u8], data: &[u8], result: &mut [u8; SHA256_HMAC_RESULT_SIZ
     unsafe {
         let mut expanded_key = symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default();
         symcrypt_sys::SymCryptHmacSha256ExpandKey(
-            &mut expanded_key,                 // pExpandedKey
-            key.as_ptr(),                      // pbKey
-            key.len() as symcrypt_sys::SIZE_T, // cbKey
+            &mut expanded_key,
+            key.as_ptr(),
+            key.len() as symcrypt_sys::SIZE_T,
         );
         symcrypt_sys::SymCryptHmacSha256(
-            &mut expanded_key,                  // pExpandedKey
-            data.as_ptr(),                      // pbData
-            data.len() as symcrypt_sys::SIZE_T, // cbData
-            result.as_mut_ptr(),                // pbResult
+            &mut expanded_key,
+            data.as_ptr(),
+            data.len() as symcrypt_sys::SIZE_T,
+            result.as_mut_ptr(),
         );
         symcrypt_sys::SymCryptWipe(
             ptr::addr_of_mut!(expanded_key) as *mut c_void,
@@ -95,11 +95,11 @@ impl HmacSha384State {
         };
         unsafe {
             symcrypt_sys::SymCryptHmacSha384ExpandKey(
-                &mut instance.expanded_key,        // pExpandedKey
-                key.as_ptr(),                      // pbKey
-                key.len() as symcrypt_sys::SIZE_T, // cbKey
+                &mut instance.expanded_key,
+                key.as_ptr(),
+                key.len() as symcrypt_sys::SIZE_T,
             );
-            symcrypt_sys::SymCryptHmacSha384Init(&mut instance.state, &mut instance.expanded_key);
+            symcrypt_sys::SymCryptHmacSha384Init(&mut instance.state, &instance.expanded_key);
         }
         instance
     }
@@ -107,9 +107,9 @@ impl HmacSha384State {
     pub fn append(&mut self, data: &[u8]) {
         unsafe {
             symcrypt_sys::SymCryptHmacSha384Append(
-                &mut self.state,                    // pState
-                data.as_ptr(),                      // pbData
-                data.len() as symcrypt_sys::SIZE_T, // cbData
+                &mut self.state,
+                data.as_ptr(),
+                data.len() as symcrypt_sys::SIZE_T,
             )
         }
     }
@@ -141,16 +141,16 @@ pub fn hmac384(key: &[u8], data: &[u8], result: &mut [u8; SHA384_HMAC_RESULT_SIZ
     unsafe {
         let mut expanded_key = symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default();
         symcrypt_sys::SymCryptHmacSha384ExpandKey(
-            &mut expanded_key,                 // pExpandedKey
-            key.as_ptr(),                      // pbKey
-            key.len() as symcrypt_sys::SIZE_T, // cbKey
+            &mut expanded_key,
+            key.as_ptr(),
+            key.len() as symcrypt_sys::SIZE_T,
         );
 
         symcrypt_sys::SymCryptHmacSha384(
-            &mut expanded_key,                  // pExpandedKey
-            data.as_ptr(),                      // PbData
-            data.len() as symcrypt_sys::SIZE_T, // cbData
-            result.as_mut_ptr(),                // pbResult
+            &mut expanded_key,
+            data.as_ptr(),
+            data.len() as symcrypt_sys::SIZE_T,
+            result.as_mut_ptr(),
         );
 
         symcrypt_sys::SymCryptWipe(

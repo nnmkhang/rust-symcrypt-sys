@@ -24,9 +24,9 @@ impl Sha256State {
     pub fn append(&mut self, data: &[u8]) {
         unsafe {
             symcrypt_sys::SymCryptSha256Append(
-                &mut self.state,                    // pState
-                data.as_ptr(),                      // pbData
-                data.len() as symcrypt_sys::SIZE_T, // cbData
+                &mut self.state,
+                data.as_ptr(),
+                data.len() as symcrypt_sys::SIZE_T,
             );
         }
     }
@@ -52,9 +52,9 @@ impl Drop for Sha256State {
 pub fn sha256(data: &[u8], result: &mut [u8; SHA256_RESULT_SIZE]) {
     unsafe {
         symcrypt_sys::SymCryptSha256(
-            data.as_ptr(),                      // pbData
-            data.len() as symcrypt_sys::SIZE_T, // cbData
-            result.as_mut_ptr(),                // pbResult
+            data.as_ptr(),
+            data.len() as symcrypt_sys::SIZE_T,
+            result.as_mut_ptr(),
         );
     }
 }
@@ -77,9 +77,9 @@ impl Sha384State {
     pub fn append(&mut self, data: &[u8]) {
         unsafe {
             symcrypt_sys::SymCryptSha384Append(
-                &mut self.state,                    // pState
-                data.as_ptr(),                      // pbData
-                data.len() as symcrypt_sys::SIZE_T, // cbData
+                &mut self.state,
+                data.as_ptr(),
+                data.len() as symcrypt_sys::SIZE_T,
             );
         }
     }
@@ -105,9 +105,9 @@ impl Drop for Sha384State {
 pub fn sha384(data: &[u8], result: &mut [u8; SHA384_RESULT_SIZE]) {
     unsafe {
         symcrypt_sys::SymCryptSha384(
-            data.as_ptr(),                      // pbData
-            data.len() as symcrypt_sys::SIZE_T, // cbData
-            result.as_mut_ptr(),                // pbResult
+            data.as_ptr(),
+            data.len() as symcrypt_sys::SIZE_T,
+            result.as_mut_ptr(),
         );
     }
 }
