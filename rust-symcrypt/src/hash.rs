@@ -62,7 +62,8 @@ impl Drop for Sha256State {
     }
 }
 
-pub fn sha256(data: &[u8], result: &mut [u8; SHA256_RESULT_SIZE]) {
+pub fn sha256(data: &[u8]) -> [u8; SHA256_RESULT_SIZE] {
+    let mut result = [0; SHA256_RESULT_SIZE];
     unsafe {
         symcrypt_sys::SymCryptSha256(
             data.as_ptr(),
@@ -70,6 +71,7 @@ pub fn sha256(data: &[u8], result: &mut [u8; SHA256_RESULT_SIZE]) {
             result.as_mut_ptr(),
         );
     }
+    result
 }
 
 pub struct Sha384State {
@@ -121,7 +123,8 @@ impl Drop for Sha384State {
     }
 }
 
-pub fn sha384(data: &[u8], result: &mut [u8; SHA384_RESULT_SIZE]) {
+pub fn sha384(data: &[u8]) -> [u8; SHA384_RESULT_SIZE] {
+    let mut result = [0; SHA384_RESULT_SIZE];
     unsafe {
         symcrypt_sys::SymCryptSha384(
             data.as_ptr(),
@@ -129,13 +132,13 @@ pub fn sha384(data: &[u8], result: &mut [u8; SHA384_RESULT_SIZE]) {
             result.as_mut_ptr(),
         );
     }
+    result
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use std::mem::size_of;
-    #[cfg(target_os = "windows")]
     use symcrypt_sys::{SymCryptSha256Algorithm, SymCryptSha384Algorithm};
 
     fn check_hash_size(hash: symcrypt_sys::PCSYMCRYPT_HASH) -> symcrypt_sys::SIZE_T {
@@ -146,11 +149,8 @@ mod test {
         result
     }
 
-    fn test_generic_hash_state<H: Hash>(
-        mut hash_state: H,
-        data: &[u8],
-        expected: &str,
-    ) where
+    fn test_generic_hash_state<H: Hash>(mut hash_state: H, data: &[u8], expected: &str)
+    where
         H::Result: AsRef<[u8]>,
     {
         hash_state.append(data);
@@ -163,8 +163,7 @@ mod test {
         let data = hex::decode("641ec2cf711e").unwrap();
         let expected: &str = "cfdbd6c9acf9842ce04e8e6a0421838f858559cf22d2ea8a38bd07d5e4692233";
 
-        let mut result: [u8; SHA256_RESULT_SIZE] = [0; SHA256_RESULT_SIZE];
-        sha256(&data, &mut result);
+        let result = sha256(&data);
         assert_eq!(hex::encode(result), expected);
     }
 
@@ -173,11 +172,7 @@ mod test {
         let data = hex::decode("").unwrap();
         let expected: &str = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
-        test_generic_hash_state(
-            Sha256State::new(),
-            &data,
-            expected,
-        );
+        test_generic_hash_state(Sha256State::new(), &data, expected);
     }
 
     #[test]
@@ -185,8 +180,7 @@ mod test {
         let data = hex::decode("").unwrap();
         let expected: &str = "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b";
 
-        let mut result: [u8; SHA384_RESULT_SIZE] = [0; SHA384_RESULT_SIZE];
-        sha384(&data, &mut result);
+        let result = sha384(&data);
         assert_eq!(hex::encode(result), expected);
     }
 
@@ -195,14 +189,9 @@ mod test {
         let data = hex::decode("f268267bfb73d5417ac2bc4a5c64").unwrap();
         let expected: &str = "6f246b1f839e73e585c6356c01e9878ff09e9904244ed0914edb4dc7dbe9ceef3f4695988d521d14d30ee40b84a4c3c8";
 
-        test_generic_hash_state(
-            Sha384State::new(),
-            &data,
-            expected,
-        );
+        test_generic_hash_state(Sha384State::new(), &data, expected);
     }
 
-    #[cfg(target_os = "windows")]
     #[test]
     fn check_state_size() {
         unsafe {
