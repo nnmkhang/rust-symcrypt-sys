@@ -9,3 +9,4 @@ pub fn init() {
 
 pub mod hash;
 pub mod hmac;
+pub mod gcm;
