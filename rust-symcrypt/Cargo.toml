@@ -1,5 +1,5 @@
 [package]
-name = "symcrypt"
+name = "rust-symcrypt"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 symcrypt-sys = {path = "../symcrypt-sys"}
 libc = "0.2.0"
+
+[dev-dependencies]
+hex = "0.4.3"
