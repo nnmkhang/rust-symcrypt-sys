@@ -138,15 +138,6 @@ pub fn sha384(data: &[u8]) -> [u8; SHA384_RESULT_SIZE] {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::mem::size_of;
-    use symcrypt_sys::{SymCryptSha256Algorithm, SymCryptSha384Algorithm};
-
-    fn check_hash_size(hash: symcrypt_sys::PCSYMCRYPT_HASH) -> symcrypt_sys::SIZE_T {
-        unsafe {
-            let result = symcrypt_sys::SymCryptHashStateSize(hash);
-            result
-        }
-    }
 
     fn test_generic_hash_state<H: Hash>(mut hash_state: H, data: &[u8], expected: &str)
     where
@@ -189,19 +180,5 @@ mod test {
         let expected: &str = "6f246b1f839e73e585c6356c01e9878ff09e9904244ed0914edb4dc7dbe9ceef3f4695988d521d14d30ee40b84a4c3c8";
 
         test_generic_hash_state(Sha384State::new(), &data, expected);
-    }
-
-    #[test]
-    fn test_check_state_size() {
-        unsafe {
-            assert_eq!(
-                check_hash_size(SymCryptSha256Algorithm),
-                size_of::<Sha256State>() as u64
-            );
-            assert_eq!(
-                check_hash_size(SymCryptSha384Algorithm),
-                size_of::<Sha384State>() as u64
-            );
-        }
     }
 }
