@@ -158,7 +158,7 @@ mod test {
     }
 
     #[test]
-    fn stateless_sha256_hash() {
+    fn test_stateless_sha256_hash() {
         let data = hex::decode("641ec2cf711e").unwrap();
         let expected: &str = "cfdbd6c9acf9842ce04e8e6a0421838f858559cf22d2ea8a38bd07d5e4692233";
 
@@ -167,7 +167,7 @@ mod test {
     }
 
     #[test]
-    fn state_sha256_hash() {
+    fn test_state_sha256_hash() {
         let data = hex::decode("").unwrap();
         let expected: &str = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
@@ -175,7 +175,7 @@ mod test {
     }
 
     #[test]
-    fn stateless_sha384_hash() {
+    fn test_stateless_sha384_hash() {
         let data = hex::decode("").unwrap();
         let expected: &str = "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b";
 
@@ -184,7 +184,7 @@ mod test {
     }
 
     #[test]
-    fn state_sha384_hash() {
+    fn test_state_sha384_hash() {
         let data = hex::decode("f268267bfb73d5417ac2bc4a5c64").unwrap();
         let expected: &str = "6f246b1f839e73e585c6356c01e9878ff09e9904244ed0914edb4dc7dbe9ceef3f4695988d521d14d30ee40b84a4c3c8";
 
@@ -192,7 +192,7 @@ mod test {
     }
 
     #[test]
-    fn check_state_size() {
+    fn test_check_state_size() {
         unsafe {
             assert_eq!(
                 check_hash_size(SymCryptSha256Algorithm),
