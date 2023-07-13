@@ -64,11 +64,8 @@ fn main() {
         .allowlist_function("^(SymCryptEckey.*)$")
         .allowlist_function("SymCryptEcDhSecretAgreement")
         // Utility functions
-        .allowlist_function("^(SymCryptHash.*)$")
         .allowlist_function("SymCryptWipe")
-        // For testing
-        .allowlist_var("SymCryptSha256Algorithm")
-        .allowlist_var("SymCryptSha384Algorithm")
+        
         .generate_comments(true)
         .derive_default(true)
         .generate()
