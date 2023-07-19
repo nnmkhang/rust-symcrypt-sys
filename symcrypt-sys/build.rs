@@ -48,13 +48,15 @@ fn main() {
         // HMAC FUNCTIONS
         .allowlist_function("^(SymCryptHmacSha256.*)$")
         .allowlist_function("^(SymCryptHmacSha384.*)$")
-        // GCM FUNCTIONS
+        // CM FUNCTIONS
         .allowlist_function("^(SymCryptGcm.*)$")
         .allowlist_function("SymCryptChaCha20Poly1305Encrypt")
         .allowlist_function("SymCryptChaCha20Poly1305Decrypt")
         .allowlist_function("SymCryptTlsPrf1_2ExpandKey")
         .allowlist_function("SymCryptTlsPrf1_2Derive")
         .allowlist_function("SymCryptTlsPrf1_2")
+        .allowlist_var("SymCryptAesBlockCipher")
+
         // HKDF functions
         .allowlist_function("^(SymCryptHkdf.*)$")
         // ECDH Key Agreement

@@ -7,6 +7,7 @@ pub fn init() {
     }
 }
 
+pub mod chacha;
+pub mod gcm;
 pub mod hash;
 pub mod hmac;
-pub mod gcm;
