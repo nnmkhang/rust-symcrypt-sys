@@ -1,17 +1,11 @@
 use symcrypt_sys;
 
-
-// WIP still working on this
 pub enum BlockCipherType {
-    AES(symcrypt_sys::PCSYMCRYPT_BLOCKCIPHER),
+    AesBlock
 }
 
-impl BlockCipherType {
-    pub fn new_aes() -> symcrypt_sys::PCSYMCRYPT_BLOCKCIPHER {
-        let aes_cipher = unsafe {
-            symcrypt_sys::SymCryptAesBlockCipher
-            
-        };
-        aes_cipher
+pub(crate) fn convert_cipher(cipher: BlockCipherType) -> symcrypt_sys::PCSYMCRYPT_BLOCKCIPHER {
+    match cipher {
+        BlockCipherType::AesBlock => unsafe { symcrypt_sys::SymCryptAesBlockCipher }, // SAFETY: FFI calls
     }
 }

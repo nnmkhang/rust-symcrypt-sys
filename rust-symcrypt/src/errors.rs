@@ -1,6 +1,7 @@
 use std::convert::From;
 use symcrypt_sys;
 
+#[non_exhaustive]
 #[derive(Debug, PartialEq)]
 pub enum SymCryptError {
     NoError,
@@ -30,27 +31,27 @@ pub enum SymCryptError {
 impl From<symcrypt_sys::SYMCRYPT_ERROR> for SymCryptError {
     fn from(err: symcrypt_sys::SYMCRYPT_ERROR) -> Self {
         match err {
-            0 => SymCryptError::NoError,
-            32768 => SymCryptError::Unused,
-            32769 => SymCryptError::WrongKeySize,
-            32770 => SymCryptError::WrongBlockSize,
-            32771 => SymCryptError::WrongDataSize,
-            32772 => SymCryptError::WrongNonceSize,
-            32773 => SymCryptError::WrongTagSize,
-            32774 => SymCryptError::WrongIterationCount,
-            32775 => SymCryptError::AuthenticationFailure,
-            32776 => SymCryptError::ExternalFailure,
-            32777 => SymCryptError::FipsFailure,
-            32778 => SymCryptError::HardwareFailure,
-            32779 => SymCryptError::NotImplemented,
-            32780 => SymCryptError::InvalidBlob,
-            32781 => SymCryptError::BufferTooSmall,
-            32782 => SymCryptError::InvalidArgument,
-            32783 => SymCryptError::MemoryAllocationFailure,
-            32784 => SymCryptError::SignatureVerificationFailure,
-            32785 => SymCryptError::IncompatibleFormat,
-            32786 => SymCryptError::ValueTooLarge,
-            32787 => SymCryptError::SessionReplayFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => SymCryptError::NoError,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_UNUSED => SymCryptError::Unused,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_KEY_SIZE => SymCryptError::WrongKeySize,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_BLOCK_SIZE => SymCryptError::WrongBlockSize,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_DATA_SIZE => SymCryptError::WrongDataSize,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_NONCE_SIZE => SymCryptError::WrongNonceSize,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_TAG_SIZE => SymCryptError::WrongTagSize,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_ITERATION_COUNT => SymCryptError::WrongIterationCount,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_AUTHENTICATION_FAILURE => SymCryptError::AuthenticationFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_EXTERNAL_FAILURE => SymCryptError::ExternalFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_FIPS_FAILURE => SymCryptError::FipsFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_HARDWARE_FAILURE => SymCryptError::HardwareFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NOT_IMPLEMENTED => SymCryptError::NotImplemented,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_INVALID_BLOB => SymCryptError::InvalidBlob,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_BUFFER_TOO_SMALL => SymCryptError::BufferTooSmall,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_INVALID_ARGUMENT => SymCryptError::InvalidArgument,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_MEMORY_ALLOCATION_FAILURE => SymCryptError::MemoryAllocationFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_SIGNATURE_VERIFICATION_FAILURE => SymCryptError::SignatureVerificationFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_INCOMPATIBLE_FORMAT => SymCryptError::IncompatibleFormat,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_VALUE_TOO_LARGE => SymCryptError::ValueTooLarge,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_SESSION_REPLAY_FAILURE => SymCryptError::SessionReplayFailure,
             _ => SymCryptError::UnknownError(err),
         }
     }
