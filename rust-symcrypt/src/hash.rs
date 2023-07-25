@@ -142,11 +142,10 @@ mod test {
     use symcrypt_sys::{SymCryptSha256Algorithm, SymCryptSha384Algorithm};
 
     fn check_hash_size(hash: symcrypt_sys::PCSYMCRYPT_HASH) -> symcrypt_sys::SIZE_T {
-        let mut result: symcrypt_sys::SIZE_T = 0;
         unsafe {
-            result = symcrypt_sys::SymCryptHashStateSize(hash);
+            let result = symcrypt_sys::SymCryptHashStateSize(hash);
+            result
         }
-        result
     }
 
     fn test_generic_hash_state<H: Hash>(mut hash_state: H, data: &[u8], expected: &str)
