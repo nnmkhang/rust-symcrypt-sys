@@ -4,20 +4,25 @@ use std::ptr;
 use std::vec;
 use symcrypt_sys;
 use crate::errors::SymCryptError;
+use crate::block_ciphers::BlockCipherType;
 
 pub struct GcmState {
     expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY,
     state: symcrypt_sys::SYMCRYPT_GCM_STATE,
 }
 
+// Have to Box<> since memory address for Self is moved around when returning from GcmState::new() 
+// My guess is that it has to do with Result<> wrapping the Self and SymCryptError.
 impl GcmState {
     pub fn new(key: &[u8], nonce: &[u8]) -> Result<Box<Self>, SymCryptError> {
         let mut instance = Box::new(GcmState {
             state: symcrypt_sys::SYMCRYPT_GCM_STATE::default(),
             expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default()
         });
+        let block_cipher = BlockCipherType::new_aes();
+
+        expand_key(key, &mut instance.expanded_key, block_cipher)?;
         unsafe {
-            expand_key(key, &mut instance.expanded_key)?;
             symcrypt_sys::SymCryptGcmInit(
                 &mut instance.state,
                 &instance.expanded_key,
@@ -131,17 +136,18 @@ pub fn gcm_encrypt(
     src: &[u8],
     tag: &mut [u8], // This is an out parameter
 ) -> Result<Vec<u8>, SymCryptError> {
-    unsafe {
-        let mut expanded_key = symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default();
-        expand_key(key, &mut expanded_key)?;
+    let mut expanded_key = symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default();
+    let block_cipher = BlockCipherType::new_aes();
 
-        let (auth_data_ptr, auth_data_len) = auth_data.map_or_else(
-            || (std::ptr::null(), 0 as symcrypt_sys::SIZE_T),
-            |data| (data.as_ptr(), data.len() as symcrypt_sys::SIZE_T),
-        );
+    expand_key(key, &mut expanded_key, block_cipher)?;
 
-        let mut dst = vec![0u8; src.len()];
+    let (auth_data_ptr, auth_data_len) = auth_data.map_or_else(
+        || (std::ptr::null(), 0 as symcrypt_sys::SIZE_T),
+        |data| (data.as_ptr(), data.len() as symcrypt_sys::SIZE_T),
+    );
 
+    let mut dst = vec![0u8; src.len()];
+        unsafe {
         symcrypt_sys::SymCryptGcmEncrypt(
             &mut expanded_key,
             nonce.as_ptr(),
@@ -165,17 +171,17 @@ pub fn gcm_decrypt(
     src: &[u8],
     tag: &[u8],
 ) -> Result<Vec<u8>, SymCryptError> {
+    let mut expanded_key = symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default();
+    let block_cipher = BlockCipherType::new_aes();
+    expand_key(key, &mut expanded_key, block_cipher)?;
+
+    let (auth_data_ptr, auth_data_len) = auth_data.map_or_else(
+        || (std::ptr::null(), 0 as symcrypt_sys::SIZE_T),
+        |data| (data.as_ptr(), data.len() as symcrypt_sys::SIZE_T),
+    );
+
+    let mut dst = vec![0u8; src.len()];
     unsafe {
-        let mut expanded_key = symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default();
-        expand_key(key, &mut expanded_key)?;
-
-        let (auth_data_ptr, auth_data_len) = auth_data.map_or_else(
-            || (std::ptr::null(), 0 as symcrypt_sys::SIZE_T),
-            |data| (data.as_ptr(), data.len() as symcrypt_sys::SIZE_T),
-        );
-
-        let mut dst = vec![0u8; src.len()];
-
         match symcrypt_sys::SymCryptGcmDecrypt(
             &mut expanded_key,
             nonce.as_ptr(),
@@ -194,13 +200,15 @@ pub fn gcm_decrypt(
     }
 }
 
+// BLOCK CIPHER TYPE STILL WIP
+
 // SymCrypt requires pointer address to stay static through the scope, passing expand_key as an out
 // parameter to maintain static pointer address
-fn expand_key(key: &[u8], expanded_key: &mut symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY) -> Result<(), SymCryptError> {
+fn expand_key(key: &[u8], expanded_key: &mut symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY, cipher: *const symcrypt_sys::SYMCRYPT_BLOCKCIPHER) -> Result<(), SymCryptError> {
     unsafe {
         match symcrypt_sys::SymCryptGcmExpandKey(
             expanded_key,
-            symcrypt_sys::SymCryptAesBlockCipher,
+            cipher,
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
         ) {
@@ -213,7 +221,7 @@ fn expand_key(key: &[u8], expanded_key: &mut symcrypt_sys::SYMCRYPT_GCM_EXPANDED
 #[cfg(test)]
 mod test {
     use super::*;
-
+    use crate::block_ciphers::BlockCipherType;
     #[test]
     fn test_stateless_gcm_encrypt_no_ad() {
         let p_key = hex::decode("feffe9928665731c6d6a8f9467308308").unwrap();
@@ -368,10 +376,8 @@ mod test {
         let expected_tag = hex::decode("5bc94fbc3242121a47").unwrap();
         let pt = hex::decode("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39").unwrap();
 
-        unsafe {
-            let block_cipher = symcrypt_sys::SymCryptAesBlockCipher;
-            let result = validate_gcm_parameters(block_cipher, &nonce, &auth_data, &pt, &expected_tag);
-            assert_eq!(result.unwrap_err(), SymCryptError::WrongTagSize);
-        }
+        let block_cipher = BlockCipherType::new_aes();
+        let result = validate_gcm_parameters(block_cipher, &nonce, &auth_data, &pt, &expected_tag);
+        assert_eq!(result.unwrap_err(), SymCryptError::WrongTagSize);
     }
 }

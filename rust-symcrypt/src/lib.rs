@@ -8,7 +8,8 @@ pub fn init() {
 }
 
 pub mod chacha;
+pub mod errors;
 pub mod gcm;
 pub mod hash;
 pub mod hmac;
-pub mod errors;
+pub mod block_ciphers;
