@@ -1,29 +1,35 @@
+/* Galois Counter Mode functions. For further documentation please refer to symcrypt.h */
+
+use crate::block_ciphers::*;
+use crate::errors::SymCryptError;
 use core::ffi::c_void;
 use std::mem;
 use std::ptr;
 use std::vec;
 use symcrypt_sys;
-use crate::errors::SymCryptError;
-use crate::block_ciphers::*;
 
 pub struct GcmState {
     expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY,
     state: symcrypt_sys::SYMCRYPT_GCM_STATE,
 }
 
-// Have to Box<> since memory address for Self is moved around when returning from GcmState::new() 
+// Have to Box<> since memory address for Self is moved around when returning from GcmState::new()
 // My guess is that it has to do with Result<> wrapping the Self and SymCryptError.
-
 // The only accepted Cipher for GCM is AesBlock.
 impl GcmState {
-    pub fn new(key: &[u8], nonce: &[u8], cipher: BlockCipherType) -> Result<Box<Self>, SymCryptError> {
+    pub fn new(
+        key: &[u8],
+        nonce: &[u8],
+        cipher: BlockCipherType,
+    ) -> Result<Box<Self>, SymCryptError> {
         let mut instance = Box::new(GcmState {
             state: symcrypt_sys::SYMCRYPT_GCM_STATE::default(),
-            expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default()
+            expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default(),
         });
 
         expand_key(key, &mut instance.expanded_key, convert_cipher(cipher))?;
-        unsafe { // SAFETY: FFI calls
+        unsafe {
+            // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmInit(
                 &mut instance.state,
                 &instance.expanded_key,
@@ -35,7 +41,8 @@ impl GcmState {
     }
 
     pub fn auth(&mut self, auth_data: &[u8]) {
-        unsafe { // SAFETY: FFI calls
+        unsafe {
+            // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmAuthPart(
                 &mut self.state,
                 auth_data.as_ptr(),
@@ -45,7 +52,8 @@ impl GcmState {
     }
 
     pub fn encrypt_part(&mut self, data: &[u8]) -> Vec<u8> {
-        unsafe { // SAFETY: FFI calls
+        unsafe {
+            // SAFETY: FFI calls
             let mut dst: Vec<u8> = vec![0u8; data.len()];
             symcrypt_sys::SymCryptGcmEncryptPart(
                 &mut self.state,
@@ -58,7 +66,8 @@ impl GcmState {
     }
 
     pub fn encrypt_final(&mut self, tag: &mut [u8]) {
-        unsafe { // SAFETY: FFI calls
+        unsafe {
+            // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmEncryptFinal(
                 &mut self.state,
                 tag.as_mut_ptr(),
@@ -69,7 +78,8 @@ impl GcmState {
 
     pub fn decrypt_part(&mut self, data: &[u8]) -> Vec<u8> {
         let mut dst: Vec<u8> = vec![0u8; data.len()];
-        unsafe { // SAFETY: FFI calls
+        unsafe {
+            // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmDecryptPart(
                 &mut self.state,
                 data.as_ptr(),
@@ -81,14 +91,15 @@ impl GcmState {
     }
 
     pub fn decrypt_final(&mut self, tag: &[u8]) -> Result<(), SymCryptError> {
-        unsafe { // SAFETY: FFI calls
+        unsafe {
+            // SAFETY: FFI calls
             match symcrypt_sys::SymCryptGcmDecryptFinal(
                 &mut self.state,
                 tag.as_ptr(),
                 tag.len() as symcrypt_sys::SIZE_T,
             ) {
                 symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => Ok(()),
-                err => Err(err.into()), 
+                err => Err(err.into()),
             }
         }
     }
@@ -96,7 +107,8 @@ impl GcmState {
 
 impl Drop for GcmState {
     fn drop(&mut self) {
-        unsafe { // SAFETY: FFI calls
+        unsafe {
+            // SAFETY: FFI calls
             symcrypt_sys::SymCryptWipe(
                 ptr::addr_of_mut!(self.state) as *mut c_void,
                 mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T,
@@ -116,7 +128,8 @@ pub fn validate_gcm_parameters(
     data: &[u8],
     tag: &[u8],
 ) -> Result<(), SymCryptError> {
-    unsafe { // SAFETY: FFI calls
+    unsafe {
+        // SAFETY: FFI calls
         match symcrypt_sys::SymCryptGcmValidateParameters(
             convert_cipher(cipher),
             nonce.len() as symcrypt_sys::SIZE_T,
@@ -136,7 +149,7 @@ pub fn gcm_encrypt(
     auth_data: Option<&[u8]>,
     src: &[u8],
     tag_length: usize,
-    cipher: BlockCipherType
+    cipher: BlockCipherType,
 ) -> Result<(Vec<u8>, Vec<u8>), SymCryptError> {
     let mut expanded_key = symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default();
     expand_key(key, &mut expanded_key, convert_cipher(cipher))?;
@@ -148,7 +161,8 @@ pub fn gcm_encrypt(
 
     let mut dst = vec![0u8; src.len()];
     let mut tag = vec![0u8; tag_length];
-        unsafe { // SAFETY: FFI calls
+    unsafe {
+        // SAFETY: FFI calls
         symcrypt_sys::SymCryptGcmEncrypt(
             &mut expanded_key,
             nonce.as_ptr(),
@@ -171,7 +185,7 @@ pub fn gcm_decrypt(
     auth_data: Option<&[u8]>,
     src: &[u8],
     tag: &[u8],
-    cipher: BlockCipherType
+    cipher: BlockCipherType,
 ) -> Result<Vec<u8>, SymCryptError> {
     let mut expanded_key = symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default();
     expand_key(key, &mut expanded_key, convert_cipher(cipher))?;
@@ -182,7 +196,8 @@ pub fn gcm_decrypt(
     );
 
     let mut dst = vec![0u8; src.len()];
-    unsafe { // SAFETY: FFI calls
+    unsafe {
+        // SAFETY: FFI calls
         match symcrypt_sys::SymCryptGcmDecrypt(
             &mut expanded_key,
             nonce.as_ptr(),
@@ -203,8 +218,13 @@ pub fn gcm_decrypt(
 
 // SymCrypt requires pointer address to stay static through the scope, passing expand_key as an out
 // parameter to maintain static pointer address
-fn expand_key(key: &[u8], expanded_key: &mut symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY, cipher: *const symcrypt_sys::SYMCRYPT_BLOCKCIPHER) -> Result<(), SymCryptError> {
-    unsafe { // SAFETY: FFI calls
+fn expand_key(
+    key: &[u8],
+    expanded_key: &mut symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY,
+    cipher: *const symcrypt_sys::SYMCRYPT_BLOCKCIPHER,
+) -> Result<(), SymCryptError> {
+    unsafe {
+        // SAFETY: FFI calls
         match symcrypt_sys::SymCryptGcmExpandKey(
             expanded_key,
             cipher,
@@ -244,7 +264,7 @@ mod test {
         let expected_tag = "5bc94fbc3221a5db94fae95ae7121a47";
         let expected_result = "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091";
         let pt = hex::decode("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39").unwrap();
-        
+
         let cipher = BlockCipherType::AesBlock;
         let (dst, tag) = gcm_encrypt(&p_key, &nonce, Some(&auth_data), &pt, 16, cipher).unwrap();
 
@@ -299,11 +319,11 @@ mod test {
         let mut tag: [u8; 16] = [0u8; 16];
 
         gcm_state.encrypt_final(&mut tag);
-        assert_eq!(hex::encode(tag),expected_tag);
+        assert_eq!(hex::encode(tag), expected_tag);
     }
 
     #[test]
-    fn test_gcm_decrypt() { 
+    fn test_gcm_decrypt() {
         let p_key = hex::decode("feffe9928665731c6d6a8f9467308308").unwrap();
         let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
@@ -345,9 +365,9 @@ mod test {
         let mut tag: [u8; 16] = [0u8; 16];
 
         gcm_state.encrypt_final(&mut tag);
-        assert_eq!(hex::encode(tag),expected_tag);
-    } 
-    
+        assert_eq!(hex::encode(tag), expected_tag);
+    }
+
     #[test]
     fn test_gcm_decrypt_error_message() {
         let p_key = hex::decode("00000000000000000000000000000000").unwrap();

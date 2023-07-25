@@ -1,3 +1,5 @@
+/* ChaChaPoly1305 Functions. For further documentation please refer to symcrypt.h */
+
 use crate::errors::SymCryptError;
 use std::vec;
 use symcrypt_sys;
@@ -6,7 +8,7 @@ pub fn chacha20_poly1305_encrypt(
     key: &[u8],
     nonce: &[u8],
     auth_data: Option<&[u8]>,
-    src: &[u8]
+    src: &[u8],
 ) -> Result<(Vec<u8>, [u8; 16]), SymCryptError> {
     let (auth_data_ptr, auth_data_len) = auth_data.map_or_else(
         || (std::ptr::null(), 0 as symcrypt_sys::SIZE_T),
@@ -16,7 +18,8 @@ pub fn chacha20_poly1305_encrypt(
     let mut dst = vec![0u8; src.len()];
     let mut tag = [0u8; 16]; // ChaCha tag length must be 16 bytes
 
-    unsafe { // SAFETY: FFI calls
+    unsafe {
+        // SAFETY: FFI calls
         match symcrypt_sys::SymCryptChaCha20Poly1305Encrypt(
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
@@ -30,7 +33,7 @@ pub fn chacha20_poly1305_encrypt(
             tag.as_mut_ptr(),
             tag.len() as symcrypt_sys::SIZE_T,
         ) {
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => Ok((dst,tag)),
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => Ok((dst, tag)),
             err => Err(err.into()),
         }
     }
@@ -50,7 +53,8 @@ pub fn chacha20_poly1305_decrypt(
 
     let mut dst = vec![0u8; src.len()];
 
-    unsafe { // SAFETY: FFI calls
+    unsafe {
+        // SAFETY: FFI calls
         match symcrypt_sys::SymCryptChaCha20Poly1305Decrypt(
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
@@ -101,9 +105,10 @@ mod test {
         let tag = hex::decode("1ae10b594f09e26a7e902ecbd0600691").unwrap();
         let slice: &[u8] = tag.as_slice();
         let mut array: [u8; 16] = [0; 16];
-        array.copy_from_slice(slice); 
+        array.copy_from_slice(slice);
 
-        let result = chacha20_poly1305_decrypt(&key, &nonce, Some(&auth_data), &ct, &array).unwrap();
+        let result =
+            chacha20_poly1305_decrypt(&key, &nonce, Some(&auth_data), &ct, &array).unwrap();
 
         assert_eq!(hex::encode(result), pt);
     }

@@ -1,3 +1,5 @@
+/* Friendly rust errors for SYMCRYPT_ERROR. For more info on SYMCRYPT_ERRORS please refer to symcrypt.h */
+
 use std::convert::From;
 use symcrypt_sys;
 
@@ -38,20 +40,38 @@ impl From<symcrypt_sys::SYMCRYPT_ERROR> for SymCryptError {
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_DATA_SIZE => SymCryptError::WrongDataSize,
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_NONCE_SIZE => SymCryptError::WrongNonceSize,
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_TAG_SIZE => SymCryptError::WrongTagSize,
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_ITERATION_COUNT => SymCryptError::WrongIterationCount,
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_AUTHENTICATION_FAILURE => SymCryptError::AuthenticationFailure,
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_EXTERNAL_FAILURE => SymCryptError::ExternalFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_WRONG_ITERATION_COUNT => {
+                SymCryptError::WrongIterationCount
+            }
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_AUTHENTICATION_FAILURE => {
+                SymCryptError::AuthenticationFailure
+            }
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_EXTERNAL_FAILURE => {
+                SymCryptError::ExternalFailure
+            }
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_FIPS_FAILURE => SymCryptError::FipsFailure,
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_HARDWARE_FAILURE => SymCryptError::HardwareFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_HARDWARE_FAILURE => {
+                SymCryptError::HardwareFailure
+            }
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NOT_IMPLEMENTED => SymCryptError::NotImplemented,
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_INVALID_BLOB => SymCryptError::InvalidBlob,
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_BUFFER_TOO_SMALL => SymCryptError::BufferTooSmall,
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_INVALID_ARGUMENT => SymCryptError::InvalidArgument,
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_MEMORY_ALLOCATION_FAILURE => SymCryptError::MemoryAllocationFailure,
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_SIGNATURE_VERIFICATION_FAILURE => SymCryptError::SignatureVerificationFailure,
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_INCOMPATIBLE_FORMAT => SymCryptError::IncompatibleFormat,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_INVALID_ARGUMENT => {
+                SymCryptError::InvalidArgument
+            }
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_MEMORY_ALLOCATION_FAILURE => {
+                SymCryptError::MemoryAllocationFailure
+            }
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_SIGNATURE_VERIFICATION_FAILURE => {
+                SymCryptError::SignatureVerificationFailure
+            }
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_INCOMPATIBLE_FORMAT => {
+                SymCryptError::IncompatibleFormat
+            }
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_VALUE_TOO_LARGE => SymCryptError::ValueTooLarge,
-            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_SESSION_REPLAY_FAILURE => SymCryptError::SessionReplayFailure,
+            symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_SESSION_REPLAY_FAILURE => {
+                SymCryptError::SessionReplayFailure
+            }
             _ => SymCryptError::UnknownError(err),
         }
     }
