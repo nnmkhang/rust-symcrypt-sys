@@ -1,8 +1,7 @@
-use symcrypt_sys;
 use std::convert::From;
+use symcrypt_sys;
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum SymCryptError {
     NoError,
     Unused,
