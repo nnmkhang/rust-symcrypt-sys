@@ -112,4 +112,21 @@ mod test {
 
         assert_eq!(hex::encode(result), pt);
     }
+
+    #[test]
+    fn test_chacha_decrypt_failure() {
+        let key = hex::decode("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f")
+            .unwrap();
+        let nonce = hex::decode("0003").unwrap();
+        let auth_data = hex::decode("50515253c0c1c2c3c4c5c6c7").unwrap();
+        let ct = hex::decode("d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116").unwrap();
+        let tag = hex::decode("1ae10b594f09e26a7e902ecbd0600691").unwrap();
+        let slice: &[u8] = tag.as_slice();
+        let mut array: [u8; 16] = [0; 16];
+        array.copy_from_slice(slice);
+
+        let result = chacha20_poly1305_decrypt(&key, &nonce, Some(&auth_data), &ct, &array);
+
+        assert_eq!(result.unwrap_err(), SymCryptError::WrongNonceSize);
+    }
 }
