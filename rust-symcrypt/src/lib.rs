@@ -12,4 +12,6 @@ pub mod chacha;
 pub mod errors;
 pub mod gcm;
 pub mod hash;
+pub mod hkdf;
 pub mod hmac;
+pub mod prf;
