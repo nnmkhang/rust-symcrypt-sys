@@ -4,35 +4,54 @@ use crate::block_ciphers::*;
 use crate::errors::SymCryptError;
 use core::ffi::c_void;
 use std::mem;
+use std::pin::Pin;
 use std::ptr;
 use std::vec;
 use symcrypt_sys;
 
 pub struct GcmState {
-    expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY,
-    state: symcrypt_sys::SYMCRYPT_GCM_STATE,
+    inner: Pin<Box<GcmStateInner>>,
 }
 
-// Have to Box<> since memory address for Self is moved around when returning from GcmState::new()
-// My guess is that it has to do with Result<> wrapping the Self and SymCryptError.
-// The only accepted Cipher for GCM is AesBlock.
+struct GcmStateInner {
+    state: symcrypt_sys::SYMCRYPT_GCM_STATE,
+    expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY,
+}
+
+/// SymCrypt expects the address for its structs to stay static through the structs lifetime.
+/// Using an inner GCM state that is Pin<Box<T>> since the memory address for Self is moved around when returning from GcmState::new()
+/// My guess is that it has to do with Result<> wrapping the Self and SymCryptError.
+///
+/// auth_part, encrypt_part, decrypt_part take in an allocated buffer as an out parameter for performance reasons. This is for scenarios
+/// such as encrypting over a stream of data; allocating and copying data from a return will be costly performance wise.
+///
+/// Since auth_part, encrypt_part and decrypt_part may be called multiple times, you must call encrypt_final/decrypt_final at the end to ensure
+/// that the encryption/decryption has completed successfully.
+///
+/// The only accepted Cipher for GCM is AesBlock.
 impl GcmState {
     pub fn new(
         key: &[u8],
         nonce: &[u8; 12], // GCM nonce length must be 12 bytes
         cipher: BlockCipherType,
-    ) -> Result<Box<Self>, SymCryptError> {
-        let mut instance = Box::new(GcmState {
-            state: symcrypt_sys::SYMCRYPT_GCM_STATE::default(),
-            expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default(),
-        });
+    ) -> Result<Self, SymCryptError> {
+        let mut instance = GcmState {
+            inner: Box::pin(GcmStateInner {
+                state: symcrypt_sys::SYMCRYPT_GCM_STATE::default(),
+                expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default(),
+            }),
+        };
 
-        gcm_expand_key(key, &mut instance.expanded_key, convert_cipher(cipher))?;
+        gcm_expand_key(
+            key,
+            &mut instance.inner.expanded_key,
+            convert_cipher(cipher),
+        )?;
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmInit(
-                &mut instance.state,
-                &instance.expanded_key,
+                &mut instance.inner.state,
+                &instance.inner.expanded_key,
                 nonce.as_ptr(),
                 nonce.len() as symcrypt_sys::SIZE_T,
             );
@@ -40,28 +59,29 @@ impl GcmState {
         }
     }
 
+    // Can be called multiple times
     pub fn auth_part(&mut self, auth_data: &[u8]) {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmAuthPart(
-                &mut self.state,
+                &mut self.inner.state,
                 auth_data.as_ptr(),
                 auth_data.len() as symcrypt_sys::SIZE_T,
             );
         }
     }
 
-    pub fn encrypt_part(&mut self, plain_text: &[u8]) -> Vec<u8> {
+    // Can be called multiple times
+    // Takes in a buffer as an out parameter for performance reasons
+    pub fn encrypt_part(&mut self, plain_text: &[u8], cipher_text_buffer: &mut [u8]) {
         unsafe {
             // SAFETY: FFI calls
-            let mut cipher_text: Vec<u8> = vec![0u8; plain_text.len()];
             symcrypt_sys::SymCryptGcmEncryptPart(
-                &mut self.state,
+                &mut self.inner.state,
                 plain_text.as_ptr(),
-                cipher_text.as_mut_ptr(),
-                cipher_text.len() as symcrypt_sys::SIZE_T,
+                cipher_text_buffer.as_mut_ptr(),
+                cipher_text_buffer.len() as symcrypt_sys::SIZE_T,
             );
-            cipher_text
         }
     }
 
@@ -69,24 +89,24 @@ impl GcmState {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmEncryptFinal(
-                &mut self.state,
+                &mut self.inner.state,
                 tag.as_mut_ptr(),
                 tag.len() as symcrypt_sys::SIZE_T,
             );
         }
     }
 
-    pub fn decrypt_part(&mut self, cipher_text: &[u8]) -> Vec<u8> {
-        let mut plain_text: Vec<u8> = vec![0u8; cipher_text.len()];
+    // Can be called multiple times
+    // Takes in a buffer as an out parameter for performance reasons
+    pub fn decrypt_part(&mut self, cipher_text: &[u8], plain_text_buffer: &mut [u8]) {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmDecryptPart(
-                &mut self.state,
+                &mut self.inner.state,
                 cipher_text.as_ptr(),
-                plain_text.as_mut_ptr(),
-                plain_text.len() as symcrypt_sys::SIZE_T,
+                plain_text_buffer.as_mut_ptr(),
+                plain_text_buffer.len() as symcrypt_sys::SIZE_T,
             );
-            plain_text
         }
     }
 
@@ -94,7 +114,7 @@ impl GcmState {
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptGcmDecryptFinal(
-                &mut self.state,
+                &mut self.inner.state,
                 tag.as_ptr(),
                 tag.len() as symcrypt_sys::SIZE_T,
             ) {
@@ -110,12 +130,12 @@ impl Drop for GcmState {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptWipe(
-                ptr::addr_of_mut!(self.state) as *mut c_void,
-                mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T,
+                ptr::addr_of_mut!(self.inner.state) as *mut c_void,
+                mem::size_of_val(&mut self.inner.state) as symcrypt_sys::SIZE_T,
             );
             symcrypt_sys::SymCryptWipe(
-                ptr::addr_of_mut!(self.expanded_key) as *mut c_void,
-                mem::size_of_val(&mut self.expanded_key) as symcrypt_sys::SIZE_T,
+                ptr::addr_of_mut!(self.inner.expanded_key) as *mut c_void,
+                mem::size_of_val(&mut self.inner.expanded_key) as symcrypt_sys::SIZE_T,
             );
         }
     }
@@ -317,6 +337,7 @@ mod test {
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
         let expected_result = "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091";
         let pt = hex::decode("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39").unwrap();
+        let mut ct = vec![0; pt.len()];
 
         let expected_tag = "5bc94fbc3221a5db94fae95ae7121a47";
         let cipher = BlockCipherType::AesBlock;
@@ -325,8 +346,8 @@ mod test {
 
         let mut gcm_state = GcmState::new(&p_key, &nonce_array, cipher).unwrap();
         gcm_state.auth_part(&auth_data);
-        let dst = gcm_state.encrypt_part(&pt);
-        assert_eq!(hex::encode(dst), expected_result);
+        gcm_state.encrypt_part(&pt, &mut ct);
+        assert_eq!(hex::encode(ct), expected_result);
         let mut tag: [u8; 16] = [0u8; 16];
 
         gcm_state.encrypt_final(&mut tag);
@@ -340,17 +361,19 @@ mod test {
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
         let expected_result = "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39";
         let tag = hex::decode("5bc94fbc3221a5db94fae95ae7121a47").unwrap();
-        let pt = hex::decode("42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091").unwrap();
+        let ct = hex::decode("42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091").unwrap();
         let cipher = BlockCipherType::AesBlock;
+        let mut pt = vec![0; ct.len()];
 
         let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let mut gcm_state = GcmState::new(&p_key, &nonce_array, cipher).unwrap();
         gcm_state.auth_part(&auth_data);
-        let dst = gcm_state.decrypt_part(&pt);
-        assert_eq!(hex::encode(dst), expected_result);
+        gcm_state.decrypt_part(&ct, &mut pt);
+        assert_eq!(hex::encode(pt), expected_result);
         gcm_state.decrypt_final(&tag).unwrap();
     }
+    
     #[test]
     fn test_gcm_decrypt_no_decrypt_part() {
         let p_key = hex::decode("00000000000000000000000000000000").unwrap();
