@@ -48,7 +48,7 @@ fn main() {
         // HMAC FUNCTIONS
         .allowlist_function("^(SymCryptHmacSha256.*)$")
         .allowlist_function("^(SymCryptHmacSha384.*)$")
-        // CM FUNCTIONS
+        // GCM FUNCTIONS
         .allowlist_function("^(SymCryptGcm.*)$")
         .allowlist_function("SymCryptChaCha20Poly1305Encrypt")
         .allowlist_function("SymCryptChaCha20Poly1305Decrypt")
