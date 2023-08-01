@@ -55,6 +55,8 @@ fn main() {
         .allowlist_function("SymCryptTlsPrf1_2ExpandKey")
         .allowlist_function("SymCryptTlsPrf1_2Derive")
         .allowlist_function("SymCryptTlsPrf1_2")
+        .allowlist_var("SymCryptAesBlockCipher")
+
         // HKDF functions
         .allowlist_function("^(SymCryptHkdf.*)$")
         // ECDH Key Agreement

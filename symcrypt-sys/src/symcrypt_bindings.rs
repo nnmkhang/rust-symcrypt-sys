@@ -3542,6 +3542,16 @@ extern "C" {
         cbTag: SIZE_T,
     ) -> SYMCRYPT_ERROR;
 }
+#[cfg(target_os = "windows")]
+#[link(name = "symcrypttestmodule", kind = "dylib")]
+extern "C" {
+    pub static SymCryptAesBlockCipher: PCSYMCRYPT_BLOCKCIPHER;
+}
+#[cfg(target_os = "linux")]
+#[link(name = "symcrypttestmodule", kind = "dylib")]
+extern "C" {
+    pub static SymCryptAesBlockCipher: PCSYMCRYPT_BLOCKCIPHER;
+}
 extern "C" {
     pub fn SymCryptGcmValidateParameters(
         pBlockCipher: PCSYMCRYPT_BLOCKCIPHER,
