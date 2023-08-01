@@ -59,6 +59,9 @@ fn main() {
 
         // HKDF functions
         .allowlist_function("^(SymCryptHkdf.*)$")
+        .allowlist_var("SymCryptHmacSha256Algorithm")
+        .allowlist_var("SymCryptHmacSha384Algorithm")
+
         // ECDH Key Agreement
         .allowlist_var("SymCryptEcurveParamsNistP256")
         .allowlist_var("SymCryptEcurveParamsNistP384")

@@ -3388,6 +3388,15 @@ extern "C" {
         pbBlob: PCBYTE,
     ) -> SYMCRYPT_ERROR;
 }
+#[cfg(target_os = "windows")]
+#[link(name = "symcrypttestmodule", kind = "dylib")]
+extern "C" {
+    pub static SymCryptHmacSha256Algorithm: PCSYMCRYPT_MAC;
+}
+#[cfg(target_os = "linux")]
+extern "C" {
+    pub static SymCryptHmacSha256Algorithm: PCSYMCRYPT_MAC;
+}
 extern "C" {
     pub fn SymCryptSha256Selftest();
 }
@@ -3417,6 +3426,15 @@ extern "C" {
 }
 extern "C" {
     pub fn SymCryptSha384Selftest();
+}
+#[cfg(target_os = "windows")]
+#[link(name = "symcrypttestmodule", kind = "dylib")]
+extern "C" {
+    pub static SymCryptHmacSha384Algorithm: PCSYMCRYPT_MAC;
+}
+#[cfg(target_os = "linux")]
+extern "C" {
+    pub static SymCryptHmacSha384Algorithm: PCSYMCRYPT_MAC;
 }
 extern "C" {
     pub fn SymCryptHmacSha256ExpandKey(
