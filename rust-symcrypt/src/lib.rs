@@ -8,6 +8,7 @@ pub fn init() {
 }
 
 pub mod block_ciphers;
+pub mod mac_algorithms;
 pub mod chacha;
 pub mod errors;
 pub mod gcm;
