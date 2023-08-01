@@ -18,9 +18,10 @@ struct GcmStateInner {
     expanded_key: symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY,
 }
 
-/// SymCrypt expects the address for its structs to stay static through the structs lifetime.
 /// Using an inner GCM state that is Pin<Box<T>> since the memory address for Self is moved around when returning from GcmState::new()
-/// My guess is that it has to do with Result<> wrapping the Self and SymCryptError.
+///
+/// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
+/// doing so would lead to use-after-free and inconsistent states.
 ///
 /// encrypt_part, decrypt_part take in an allocated buffer as an out parameter for performance reasons. This is for scenarios
 /// such as encrypting over a stream of data; allocating and copying data from a return will be costly performance wise.
@@ -74,7 +75,11 @@ impl GcmState {
     // Can be called multiple times
     // Takes in a buffer as an out parameter for performance reasons
     pub fn encrypt_part(&mut self, plain_text: &[u8], cipher_text_buffer: &mut [u8]) {
-        assert_eq!(plain_text.len(), cipher_text_buffer.len(), "plain_text and cipher_text_buffer must be the same length");
+        assert_eq!(
+            plain_text.len(),
+            cipher_text_buffer.len(),
+            "plain_text and cipher_text_buffer must be the same length"
+        );
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmEncryptPart(
@@ -100,7 +105,11 @@ impl GcmState {
     // Can be called multiple times
     // Takes in a buffer as an out parameter for performance reasons
     pub fn decrypt_part(&mut self, cipher_text: &[u8], plain_text_buffer: &mut [u8]) {
-        assert_eq!(cipher_text.len(), plain_text_buffer.len(), "cipher_text and plain_text_buffer must be the same length");
+        assert_eq!(
+            cipher_text.len(),
+            plain_text_buffer.len(),
+            "cipher_text and plain_text_buffer must be the same length"
+        );
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmDecryptPart(
@@ -266,12 +275,11 @@ mod test {
     #[test]
     fn test_stateless_gcm_encrypt_no_ad() {
         let p_key = hex::decode("feffe9928665731c6d6a8f9467308308").unwrap();
-        let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("cafebabefacedbaddecaf888", &mut nonce_array).unwrap();
         let expected_tag = "4d5c2af327cd64a62cf35abd2ba6fab4";
         let expected_result = "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091473f5985";
         let pt = hex::decode("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255").unwrap();
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let cipher = BlockCipherType::AesBlock;
         let (dst, tag) = gcm_encrypt(&p_key, &nonce_array, None, &pt, 16, cipher).unwrap();
@@ -283,13 +291,12 @@ mod test {
     #[test]
     fn test_stateless_gcm_encrypt_ad() {
         let p_key = hex::decode("feffe9928665731c6d6a8f9467308308").unwrap();
-        let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("cafebabefacedbaddecaf888", &mut nonce_array).unwrap();
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
         let expected_tag = "5bc94fbc3221a5db94fae95ae7121a47";
         let expected_result = "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091";
         let pt = hex::decode("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39").unwrap();
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let cipher = BlockCipherType::AesBlock;
         let (dst, tag) =
@@ -302,13 +309,12 @@ mod test {
     #[test]
     fn test_stateless_gcm_decrypt_no_ad() {
         let p_key = hex::decode("feffe9928665731c6d6a8f9467308308").unwrap();
-        let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("cafebabefacedbaddecaf888", &mut nonce_array).unwrap();
         let tag = hex::decode("4d5c2af327cd64a62cf35abd2ba6fab4").unwrap();
         let ct = hex::decode("42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091473f5985").unwrap();
         let expected_result = "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255";
         let cipher = BlockCipherType::AesBlock;
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let dst = gcm_decrypt(&p_key, &nonce_array, None, &ct, &tag, cipher).unwrap();
 
@@ -318,14 +324,13 @@ mod test {
     #[test]
     fn test_stateless_gcm_decrypt_ad() {
         let p_key = hex::decode("feffe9928665731c6d6a8f9467308308feffe9928665731c").unwrap();
-        let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("cafebabefacedbaddecaf888", &mut nonce_array).unwrap();
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
         let tag = hex::decode("2519498e80f1478f37ba55bd6d27618c").unwrap();
         let ct = hex::decode("3980ca0b3c00e841eb06fac4872a2757859e1ceaa6efd984628593b40ca1e19c7d773d00c144c525ac619d18c84a3f4718e2448b2fe324d9ccda2710").unwrap();
         let expected_result = "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39";
         let cipher = BlockCipherType::AesBlock;
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let dst = gcm_decrypt(&p_key, &nonce_array, Some(&auth_data), &ct, &tag, cipher).unwrap();
 
@@ -336,15 +341,14 @@ mod test {
     #[should_panic]
     fn test_gcm_encrypt_panics_on_length_mismatch() {
         let p_key = hex::decode("feffe9928665731c6d6a8f9467308308").unwrap();
-        let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("cafebabefacedbaddecaf888", &mut nonce_array).unwrap();
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
         let expected_result = "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091";
         let pt = hex::decode("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39").unwrap();
         let mut ct = vec![0; 6];
 
         let cipher = BlockCipherType::AesBlock;
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let mut gcm_state = GcmState::new(&p_key, &nonce_array, cipher).unwrap();
         gcm_state.auth_part(&auth_data);
@@ -355,7 +359,8 @@ mod test {
     #[test]
     fn test_gcm_encrypt() {
         let p_key = hex::decode("feffe9928665731c6d6a8f9467308308").unwrap();
-        let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("cafebabefacedbaddecaf888", &mut nonce_array).unwrap();
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
         let expected_result = "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091";
         let pt = hex::decode("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39").unwrap();
@@ -363,8 +368,6 @@ mod test {
 
         let expected_tag = "5bc94fbc3221a5db94fae95ae7121a47";
         let cipher = BlockCipherType::AesBlock;
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let mut gcm_state = GcmState::new(&p_key, &nonce_array, cipher).unwrap();
         gcm_state.auth_part(&auth_data);
@@ -379,15 +382,14 @@ mod test {
     #[test]
     fn test_gcm_decrypt() {
         let p_key = hex::decode("feffe9928665731c6d6a8f9467308308").unwrap();
-        let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("cafebabefacedbaddecaf888", &mut nonce_array).unwrap();
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
         let expected_result = "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39";
         let tag = hex::decode("5bc94fbc3221a5db94fae95ae7121a47").unwrap();
         let ct = hex::decode("42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091").unwrap();
         let cipher = BlockCipherType::AesBlock;
         let mut pt = vec![0; ct.len()];
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let mut gcm_state = GcmState::new(&p_key, &nonce_array, cipher).unwrap();
         gcm_state.auth_part(&auth_data);
@@ -399,12 +401,11 @@ mod test {
     #[test]
     fn test_gcm_decrypt_no_decrypt_part() {
         let p_key = hex::decode("00000000000000000000000000000000").unwrap();
-        let nonce = hex::decode("000000000000000000000000").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("000000000000000000000000", &mut nonce_array).unwrap();
         let auth_data = hex::decode("").unwrap();
         let tag = hex::decode("58e2fccefa7e3061367f1d57a4e7455a").unwrap();
         let cipher = BlockCipherType::AesBlock;
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let mut gcm_state = GcmState::new(&p_key, &nonce_array, cipher).unwrap();
         gcm_state.auth_part(&auth_data);
@@ -414,13 +415,12 @@ mod test {
     #[test]
     fn test_gcm_encrypt_no_encrypt_part() {
         let p_key = hex::decode("00000000000000000000000000000000").unwrap();
-        let nonce = hex::decode("000000000000000000000000").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("000000000000000000000000", &mut nonce_array).unwrap();
         let auth_data = hex::decode("").unwrap();
 
         let expected_tag = "58e2fccefa7e3061367f1d57a4e7455a";
         let cipher = BlockCipherType::AesBlock;
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let mut gcm_state = GcmState::new(&p_key, &nonce_array, cipher).unwrap();
         gcm_state.auth_part(&auth_data);
@@ -433,11 +433,10 @@ mod test {
     #[test]
     fn test_gcm_decrypt_error_message() {
         let p_key = hex::decode("00000000000000000000000000000000").unwrap();
-        let nonce = hex::decode("000000000000000000000000").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("000000000000000000000000", &mut nonce_array).unwrap();
         let auth_data = hex::decode("").unwrap();
         let cipher = BlockCipherType::AesBlock;
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let mut gcm_state = GcmState::new(&p_key, &nonce_array, cipher).unwrap();
 
@@ -450,26 +449,24 @@ mod test {
 
     #[test]
     fn test_validate_parameters() {
-        let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("cafebabefacedbaddecaf888", &mut nonce_array).unwrap();
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
         let expected_tag = hex::decode("5bc94fbc3221a5db94fae95ae7121a47").unwrap();
         let pt = hex::decode("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39").unwrap();
         let cipher = BlockCipherType::AesBlock;
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         validate_gcm_parameters(cipher, &nonce_array, &auth_data, &pt, &expected_tag).unwrap();
     }
 
     #[test]
     fn test_validate_parameters_fail() {
-        let nonce = hex::decode("cafebabefacedbaddecaf888").unwrap();
+        let mut nonce_array = [0u8; 12];
+        hex::decode_to_slice("cafebabefacedbaddecaf888", &mut nonce_array).unwrap();
         let auth_data = hex::decode("feedfacedeadbeeffeedfacedeadbeefabaddad2").unwrap();
         let expected_tag = hex::decode("5bc94fbc3242121a47").unwrap();
         let pt = hex::decode("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39").unwrap();
         let cipher = BlockCipherType::AesBlock;
-
-        let nonce_array: [u8; 12] = nonce.as_slice().try_into().unwrap();
 
         let result = validate_gcm_parameters(cipher, &nonce_array, &auth_data, &pt, &expected_tag);
         assert_eq!(result.unwrap_err(), SymCryptError::WrongTagSize);
