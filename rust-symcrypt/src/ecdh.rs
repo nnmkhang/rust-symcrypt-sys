@@ -37,15 +37,19 @@ impl EcDh {
 
             instance.key = Some(key_ptr);
 
-            symcrypt_sys::SymCryptEckeySetRandom(
+            match symcrypt_sys::SymCryptEckeySetRandom(
                 symcrypt_sys::SYMCRYPT_FLAG_ECKEY_ECDH,
                 instance.key.unwrap(),
-            );
+            ) {
+                symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
+                    Ok(instance)
+                }
+                err => Err(err.into()),
+            }
         }
-        Ok(instance)
     }
 
-    /// ExDh::from_public_key_bytes function returns a EcDh struct that only has a public key attached.
+    /// EcDh::from_public_key_bytes()    function returns a EcDh struct that only has a public key attached.
     pub fn from_public_key_bytes(
         curve: CurveType,
         public_key: &[u8],
@@ -56,11 +60,7 @@ impl EcDh {
             key: None,
         };
 
-        let num_format = if instance.curve_type == CurveType::Curve25519 {
-            symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_LSB_FIRST
-        } else {
-            symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_MSB_FIRST
-        };
+        let num_format = get_num_format(instance.curve_type);
 
         let ec_point_format = symcrypt_sys::_SYMCRYPT_ECPOINT_FORMAT_SYMCRYPT_ECPOINT_FORMAT_XY;
 
@@ -76,11 +76,11 @@ impl EcDh {
 
             let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(instance.expanded_curve.unwrap());
             if key_ptr.is_null() {
-                return Err(SymCryptError::AuthenticationFailure);
+                return Err(SymCryptError::InvalidArgument);
             }
 
             match symcrypt_sys::SymCryptEckeySetValue(
-                std::ptr::null_mut(),
+                std::ptr::null(),
                 0,
                 public_key.as_ptr(),
                 public_key.len() as symcrypt_sys::SIZE_T,
@@ -99,12 +99,7 @@ impl EcDh {
     }
 
     pub fn get_public_key_bytes(&mut self) -> Result<Vec<u8>, SymCryptError> {
-        let num_format = if self.curve_type == CurveType::Curve25519 {
-            symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_LSB_FIRST
-        } else {
-            symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_MSB_FIRST
-        };
-
+        let num_format = get_num_format(self.curve_type);
         let ec_point_format = symcrypt_sys::_SYMCRYPT_ECPOINT_FORMAT_SYMCRYPT_ECPOINT_FORMAT_XY;
 
         unsafe {
@@ -134,14 +129,10 @@ impl EcDh {
 
     pub fn ecdh_secret_agreement(private: &EcDh, public: &EcDh) -> Result<Vec<u8>, SymCryptError> {
         if private.curve_type != public.curve_type {
-            return Err(SymCryptError::AuthenticationFailure);
+            return Err(SymCryptError::InvalidArgument);
         }
 
-        let num_format = if private.curve_type == CurveType::Curve25519 {
-            symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_LSB_FIRST
-        } else {
-            symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_MSB_FIRST
-        };
+        let num_format = get_num_format(private.curve_type);
 
         unsafe {
             // SAFETY: FFI calls
@@ -178,19 +169,23 @@ impl Drop for EcDh {
     }
 }
 
+fn get_num_format(curve_type: CurveType)-> i32 {
+    if curve_type == CurveType::Curve25519 {
+        return symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_LSB_FIRST;
+    } else {
+        return symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_MSB_FIRST;
+    };
+}
+
 mod test {
     use super::*;
-    use crate::init;
+    use crate::symcrypt_init;
 
     /// symcrypt_sys::SymCryptModuleInit() must be called via lib.rs in order to initialize the callbacks for
     /// SymCryptEcurveAllocate, SymCryptEckeyAllocate, SymCryptCallbackAlloc, etc.
-    /// Calling init() at the beginning of each test function is causing a mismatch error in the magic, so we
-    /// are wrapping all tests under one function to call the init() only once. This is closer to the actual
-    /// behavior of symcrypt since SymCryptModuleInit() would only be called once at the beginning of the module.
-
     #[test]
     fn test_ecdh_nist_p256() {
-        init(); // must run init for the alloc callbacks to initialize
+        symcrypt_init(); // must run symcrypt_init for the alloc callbacks to initialize
         let mut ecdh_1_private = EcDh::new(CurveType::NistP256).unwrap();
         let mut ecdh_2_private = EcDh::new(CurveType::NistP256).unwrap();
 
@@ -212,7 +207,7 @@ mod test {
 
     #[test]
     fn test_ecdh_nist_p384() {
-        init(); // must run init for the alloc callbacks to initialize
+        symcrypt_init(); // must run symcrypt_init for the alloc callbacks to initialize
         let mut ecdh_1_private = EcDh::new(CurveType::NistP384).unwrap();
         let mut ecdh_2_private = EcDh::new(CurveType::NistP384).unwrap();
 
@@ -234,7 +229,7 @@ mod test {
 
     #[test]
     fn test_ecdh_curve_25519() {
-        init(); // must run init for the alloc callbacks to initialize
+        symcrypt_init(); // must run symcrypt_init for the alloc callbacks to initialize
         let mut ecdh_1_private = EcDh::new(CurveType::Curve25519).unwrap();
         let mut ecdh_2_private = EcDh::new(CurveType::Curve25519).unwrap();
 
@@ -256,97 +251,19 @@ mod test {
 
     #[test]
     fn test_ecdh_failure() {
-        init(); // must run init for the alloc callbacks to initialize
+        symcrypt_init(); // must run symcrypt_init for the alloc callbacks to initialize
         let ecdh_1_private = EcDh::new(CurveType::NistP384).unwrap();
         let mut ecdh_2_private = EcDh::new(CurveType::NistP256).unwrap();
 
         let public_bytes_2 = ecdh_2_private.get_public_key_bytes().unwrap();
 
         let ecdh_2_public =
-            EcDh::from_public_key_bytes(CurveType::NistP256, &public_bytes_2.as_slice()).unwrap();
+            EcDh::from_public_key_bytes(CurveType::NistP256, &public_bytes_2).unwrap();
 
         let secret_agreement_1 = EcDh::ecdh_secret_agreement(&ecdh_1_private, &ecdh_2_public);
         assert_eq!(
             secret_agreement_1.unwrap_err(),
-            SymCryptError::AuthenticationFailure
-        );
-    }
-
-    #[test]
-    fn test_all_ecdh() {
-        init(); // must run init for the alloc callbacks to initialize
-
-        // test_ecdh_nist_p256
-        let mut ecdh_1_private = EcDh::new(CurveType::NistP256).unwrap();
-        let mut ecdh_2_private = EcDh::new(CurveType::NistP256).unwrap();
-
-        let public_bytes_1 = ecdh_1_private.get_public_key_bytes().unwrap();
-        let public_bytes_2 = ecdh_2_private.get_public_key_bytes().unwrap();
-
-        let ecdh_1_public =
-            EcDh::from_public_key_bytes(CurveType::NistP256, &public_bytes_1.as_slice()).unwrap();
-        let ecdh_2_public =
-            EcDh::from_public_key_bytes(CurveType::NistP256, &public_bytes_2.as_slice()).unwrap();
-
-        let secret_agreement_1 =
-            EcDh::ecdh_secret_agreement(&ecdh_1_private, &ecdh_2_public).unwrap();
-        let secret_agreement_2 =
-            EcDh::ecdh_secret_agreement(&ecdh_2_private, &ecdh_1_public).unwrap();
-
-        assert_eq!(secret_agreement_1, secret_agreement_2);
-
-        // test_ecdh_nist_p384
-        let mut ecdh_1_private = EcDh::new(CurveType::NistP384).unwrap();
-        let mut ecdh_2_private = EcDh::new(CurveType::NistP384).unwrap();
-
-        let public_bytes_1 = ecdh_1_private.get_public_key_bytes().unwrap();
-        let public_bytes_2 = ecdh_2_private.get_public_key_bytes().unwrap();
-
-        let ecdh_1_public =
-            EcDh::from_public_key_bytes(CurveType::NistP384, &public_bytes_1.as_slice()).unwrap();
-        let ecdh_2_public =
-            EcDh::from_public_key_bytes(CurveType::NistP384, &public_bytes_2.as_slice()).unwrap();
-
-        let secret_agreement_1 =
-            EcDh::ecdh_secret_agreement(&ecdh_1_private, &ecdh_2_public).unwrap();
-        let secret_agreement_2 =
-            EcDh::ecdh_secret_agreement(&ecdh_2_private, &ecdh_1_public).unwrap();
-
-        assert_eq!(secret_agreement_1, secret_agreement_2);
-
-        // test_ecdh_curve_25519
-        let mut ecdh_1_private = EcDh::new(CurveType::Curve25519).unwrap();
-        let mut ecdh_2_private = EcDh::new(CurveType::Curve25519).unwrap();
-
-        let public_bytes_1 = ecdh_1_private.get_public_key_bytes().unwrap();
-        let public_bytes_2 = ecdh_2_private.get_public_key_bytes().unwrap();
-
-        let ecdh_1_public =
-            EcDh::from_public_key_bytes(CurveType::Curve25519, &public_bytes_1.as_slice()).unwrap();
-        let ecdh_2_public =
-            EcDh::from_public_key_bytes(CurveType::Curve25519, &public_bytes_2.as_slice()).unwrap();
-
-        let secret_agreement_1 =
-            EcDh::ecdh_secret_agreement(&ecdh_1_private, &ecdh_2_public).unwrap();
-        let secret_agreement_2 =
-            EcDh::ecdh_secret_agreement(&ecdh_2_private, &ecdh_1_public).unwrap();
-
-        assert_eq!(secret_agreement_1, secret_agreement_2);
-
-        //test_ecdh_failure
-
-        let ecdh_1_private = EcDh::new(CurveType::NistP384).unwrap();
-        let mut ecdh_2_private = EcDh::new(CurveType::NistP256).unwrap();
-
-        let public_bytes_2 = ecdh_2_private.get_public_key_bytes().unwrap();
-
-        let ecdh_2_public =
-            EcDh::from_public_key_bytes(CurveType::NistP256, &public_bytes_2.as_slice()).unwrap();
-
-        let secret_agreement_1 = EcDh::ecdh_secret_agreement(&ecdh_1_private, &ecdh_2_public);
-        assert_eq!(
-            secret_agreement_1.unwrap_err(),
-            SymCryptError::AuthenticationFailure
+            SymCryptError::InvalidArgument
         );
     }
 }
