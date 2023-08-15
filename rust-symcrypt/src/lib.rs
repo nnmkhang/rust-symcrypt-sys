@@ -9,6 +9,8 @@ pub fn init() {
 
 pub mod block_ciphers;
 pub mod chacha;
+pub mod curve_type;
+pub mod ecdh;
 pub mod errors;
 pub mod gcm;
 pub mod hash;

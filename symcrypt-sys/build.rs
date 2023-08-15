@@ -56,15 +56,17 @@ fn main() {
         .allowlist_function("SymCryptTlsPrf1_2Derive")
         .allowlist_function("SymCryptTlsPrf1_2")
         .allowlist_var("SymCryptAesBlockCipher")
-
         // HKDF functions
         .allowlist_function("^(SymCryptHkdf.*)$")
         // ECDH Key Agreement
         .allowlist_var("SymCryptEcurveParamsNistP256")
         .allowlist_var("SymCryptEcurveParamsNistP384")
+        .allowlist_var("SymCryptEcurveParamsCurve25519")
+        .allowlist_var("SYMCRYPT_FLAG_ECKEY_ECDH")
         .allowlist_function("^(SymCryptEcurve.*)$")
         .allowlist_function("^(SymCryptEckey.*)$")
         .allowlist_function("SymCryptEcDhSecretAgreement")
+        .allowlist_function("SymCryptSizeofEckeyFromCurve")
         // Utility functions
         .allowlist_function("SymCryptWipe")
         
