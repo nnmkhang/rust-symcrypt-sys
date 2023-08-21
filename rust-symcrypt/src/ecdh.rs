@@ -7,26 +7,41 @@ use symcrypt_sys;
 
 /// EcDhKey is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY, this is to let rust handle the free'ing of this pointer
 /// EcDhKey must be allocated after EcDhExpandedCurve and free'd before EcDhExpandedCurve is free'd
-struct EcDhKey(
-    symcrypt_sys::PSYMCRYPT_ECKEY,
-    symcrypt_sys::PSYMCRYPT_ECURVE,
-);
+struct EcDhKey {
+    key: symcrypt_sys::PSYMCRYPT_ECKEY,
+    expanded_curve: EcDhExpandedCurve,
+}
+
+struct EcDhExpandedCurve(symcrypt_sys::PSYMCRYPT_ECURVE);
+
+impl Drop for EcDhExpandedCurve {
+    fn drop(&mut self) {
+        unsafe { symcrypt_sys::SymCryptEcurveFree(self.0) }
+    }
+}
 
 impl EcDhKey {
     pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         unsafe {
             // Allocating expanded_curve needed for key derivation. This pointer must be dropped after the key is dropped.
-            let expanded_curve = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
-            if expanded_curve.is_null() {
+            let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
+            if curve_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
+            // expanded_curve needs to be wrapped to properly free the curve in the case there is an error in EcDhKey initialization
+            let expanded_curve = EcDhExpandedCurve(curve_ptr);
 
             // Key must be dropped before curve is dropped
-            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(expanded_curve);
+            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(curve_ptr);
             if key_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
-            Ok(EcDhKey(key_ptr, expanded_curve))
+            let key = EcDhKey {
+                key: key_ptr,
+                expanded_curve: expanded_curve,
+            };
+
+            Ok(key)
         }
     }
 }
@@ -35,8 +50,8 @@ impl EcDhKey {
 impl Drop for EcDhKey {
     fn drop(&mut self) {
         unsafe {
-            symcrypt_sys::SymCryptEckeyFree(self.0);
-            symcrypt_sys::SymCryptEcurveFree(self.1);
+            symcrypt_sys::SymCryptEckeyFree(self.key);
+            symcrypt_sys::SymCryptEcurveFree(self.expanded_curve.0);
         }
     }
 }
@@ -59,7 +74,7 @@ impl EcDh {
 
             match symcrypt_sys::SymCryptEckeySetRandom(
                 symcrypt_sys::SYMCRYPT_FLAG_ECKEY_ECDH,
-                ecdh_key.0,
+                ecdh_key.key,
             ) {
                 symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                     let instance = EcDh {
@@ -94,7 +109,7 @@ impl EcDh {
                 num_format,
                 ec_point_format,
                 symcrypt_sys::SYMCRYPT_FLAG_ECKEY_ECDH,
-                edch_key.0,
+                edch_key.key,
             ) {
                 symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                     let instance = EcDh {
@@ -115,14 +130,14 @@ impl EcDh {
         unsafe {
             // SAFETY: FFI calls
             let pub_key_len = symcrypt_sys::SymCryptEckeySizeofPublicKey(
-                self.key.0,
+                self.key.key,
                 symcrypt_sys::_SYMCRYPT_ECPOINT_FORMAT_SYMCRYPT_ECPOINT_FORMAT_XY,
             );
 
             let mut pub_key_bytes = vec![0u8; pub_key_len as usize];
 
             match symcrypt_sys::SymCryptEckeyGetValue(
-                self.key.0,
+                self.key.key,
                 std::ptr::null_mut(),
                 0 as symcrypt_sys::SIZE_T,
                 pub_key_bytes.as_mut_ptr(),
@@ -146,12 +161,13 @@ impl EcDh {
 
         unsafe {
             // SAFETY: FFI calls
-            let secret_length = symcrypt_sys::SymCryptEcurveSizeofFieldElement(private.key.1);
+            let secret_length =
+                symcrypt_sys::SymCryptEcurveSizeofFieldElement(private.key.expanded_curve.0);
             let mut secret = vec![0u8; secret_length as usize];
 
             match symcrypt_sys::SymCryptEcDhSecretAgreement(
-                private.key.0,
-                public.key.0,
+                private.key.key,
+                public.key.key,
                 num_format,
                 0,
                 secret.as_mut_ptr(),
