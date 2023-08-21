@@ -5,60 +5,46 @@ use crate::errors::SymCryptError;
 use std::vec;
 use symcrypt_sys;
 
-/// EcDhExpandedCurve is a wrapper around symcrypt_sys::PSYMCRYPT_ECURVE, this is to let rust handle the free'ing of this pointer
-/// EcDhExpandedCurve must be allocated before EcDhKey and free'd after EcDhKey is free'd
-struct EcDhExpandedCurve(symcrypt_sys::PSYMCRYPT_ECURVE);
-
-impl EcDhExpandedCurve {
-    pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
-        unsafe {
-            let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
-            if curve_ptr.is_null() {
-                return Err(SymCryptError::MemoryAllocationFailure);
-            }
-            Ok(EcDhExpandedCurve(curve_ptr))
-        }
-    }
-}
-
-/// Must be called after EcDhKey is free'd
-impl Drop for EcDhExpandedCurve {
-    fn drop(&mut self) {
-        unsafe { symcrypt_sys::SymCryptEcurveFree(self.0) }
-    }
-}
-
-
 /// EcDhKey is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY, this is to let rust handle the free'ing of this pointer
 /// EcDhKey must be allocated after EcDhExpandedCurve and free'd before EcDhExpandedCurve is free'd
-struct EcDhKey(symcrypt_sys::PSYMCRYPT_ECKEY);
+struct EcDhKey(
+    symcrypt_sys::PSYMCRYPT_ECKEY,
+    symcrypt_sys::PSYMCRYPT_ECURVE,
+);
 
 impl EcDhKey {
-    pub fn new(expanded_curve: symcrypt_sys::PSYMCRYPT_ECURVE) -> Result<Self, SymCryptError> {
+    pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         unsafe {
+            // Allocating expanded_curve needed for key derivation. This pointer must be dropped after the key is dropped.
+            let expanded_curve = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
+            if expanded_curve.is_null() {
+                return Err(SymCryptError::MemoryAllocationFailure);
+            }
+
+            // Key must be dropped before curve is dropped
             let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(expanded_curve);
             if key_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
-            Ok(EcDhKey(key_ptr))
+            Ok(EcDhKey(key_ptr, expanded_curve))
         }
     }
 }
 
-/// Must be called before EcDhExpandedCurve is free'd
+/// Must drop the Key before the expanded curve is dropped.
 impl Drop for EcDhKey {
     fn drop(&mut self) {
-        unsafe { symcrypt_sys::SymCryptEckeyFree(self.0) }
+        unsafe {
+            symcrypt_sys::SymCryptEckeyFree(self.0);
+            symcrypt_sys::SymCryptEcurveFree(self.1);
+        }
     }
 }
 
-/// EcDhKey and EcDhExpandedCurve's ownership is passed to EcDh struct, and will drop when EcDh leaves scope.
-/// Rust structs will drop fields depending on their order, since EcDhKey must be dropped before EcDhExpandedCurve,
-/// it's field order in the EcDh struct is higher.
+/// EcDhKey's ownership is passed to EcDh struct, and will drop when EcDh leaves scope.
 pub struct EcDh {
     curve_type: CurveType,
     key: EcDhKey,
-    expanded_curve: EcDhExpandedCurve,
 }
 
 impl EcDh {
@@ -67,9 +53,9 @@ impl EcDh {
         unsafe {
             // SAFETY: FFI calls
 
-            // Allocation of the key depends on the first allocating the curve. 
-            let expanded_curve = EcDhExpandedCurve::new(curve)?;
-            let ecdh_key = EcDhKey::new(expanded_curve.0)?;
+            // Allocation of the key depends on the first allocating the curve.
+            // let expanded_curve = EcDhExpandedCurve::new(curve)?;
+            let ecdh_key = EcDhKey::new(curve)?;
 
             match symcrypt_sys::SymCryptEckeySetRandom(
                 symcrypt_sys::SYMCRYPT_FLAG_ECKEY_ECDH,
@@ -78,8 +64,7 @@ impl EcDh {
                 symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                     let instance = EcDh {
                         curve_type: curve,
-                        key: ecdh_key, // Key must be set before curve to maintain drop order
-                        expanded_curve: expanded_curve, // Expanded curve must be dropped after the key
+                        key: ecdh_key,
                     };
                     Ok(instance)
                 }
@@ -97,9 +82,9 @@ impl EcDh {
 
         let ec_point_format = symcrypt_sys::_SYMCRYPT_ECPOINT_FORMAT_SYMCRYPT_ECPOINT_FORMAT_XY;
 
-        // Allocation of the key depends on the first allocating the curve. 
-        let expanded_curve = EcDhExpandedCurve::new(curve)?;
-        let edch_key = EcDhKey::new(expanded_curve.0)?;
+        // Allocation of the key depends on the first allocating the curve.
+        // let expanded_curve = EcDhExpandedCurve::new(curve)?;
+        let edch_key = EcDhKey::new(curve)?;
 
         unsafe {
             // SAFETY: FFI calls
@@ -117,7 +102,7 @@ impl EcDh {
                     let instance = EcDh {
                         curve_type: curve,
                         key: edch_key, // Key must be set before curve to maintain drop order
-                        expanded_curve: expanded_curve, // Expanded curve must be dropped after the key
+                                       // expanded_curve: expanded_curve, // Expanded curve must be dropped after the key
                     };
                     Ok(instance)
                 }
@@ -164,8 +149,7 @@ impl EcDh {
 
         unsafe {
             // SAFETY: FFI calls
-            let secret_length =
-                symcrypt_sys::SymCryptEcurveSizeofFieldElement(private.expanded_curve.0);
+            let secret_length = symcrypt_sys::SymCryptEcurveSizeofFieldElement(private.key.1);
             let mut secret = vec![0u8; secret_length as usize];
 
             match symcrypt_sys::SymCryptEcDhSecretAgreement(
