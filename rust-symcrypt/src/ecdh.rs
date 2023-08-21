@@ -82,8 +82,6 @@ impl EcDh {
 
         let ec_point_format = symcrypt_sys::_SYMCRYPT_ECPOINT_FORMAT_SYMCRYPT_ECPOINT_FORMAT_XY;
 
-        // Allocation of the key depends on the first allocating the curve.
-        // let expanded_curve = EcDhExpandedCurve::new(curve)?;
         let edch_key = EcDhKey::new(curve)?;
 
         unsafe {
@@ -101,8 +99,7 @@ impl EcDh {
                 symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                     let instance = EcDh {
                         curve_type: curve,
-                        key: edch_key, // Key must be set before curve to maintain drop order
-                                       // expanded_curve: expanded_curve, // Expanded curve must be dropped after the key
+                        key: edch_key,
                     };
                     Ok(instance)
                 }
