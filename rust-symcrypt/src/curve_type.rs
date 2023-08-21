@@ -18,6 +18,14 @@ pub(crate) fn convert_curve(curve: CurveType) -> symcrypt_sys::PCSYMCRYPT_ECURVE
     }
 }
 
+pub(crate) fn get_num_format(curve_type: CurveType) -> i32 {
+    if curve_type == CurveType::Curve25519 {
+        return symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_LSB_FIRST;
+    } else {
+        return symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_MSB_FIRST;
+    };
+}
+
 // TODO: implement lazy static for curve allocations.
 
 // pub(crate) fn convert_curve(curve: CurveType) -> symcrypt_sys::PCSYMCRYPT_ECURVE_PARAMS {
