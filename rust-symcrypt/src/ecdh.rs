@@ -68,8 +68,6 @@ impl EcDh {
         unsafe {
             // SAFETY: FFI calls
 
-            // Allocation of the key depends on the first allocating the curve.
-            // let expanded_curve = EcDhExpandedCurve::new(curve)?;
             let ecdh_key = EcDhKey::new(curve)?;
 
             match symcrypt_sys::SymCryptEckeySetRandom(
