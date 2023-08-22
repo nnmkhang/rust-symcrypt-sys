@@ -8,7 +8,7 @@ use symcrypt_sys;
 /// EcDhKey is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY, this is to let rust handle the free'ing of this pointer
 /// EcDhKey must be allocated after EcDhExpandedCurve and free'd before EcDhExpandedCurve is free'd
 struct EcDhKey {
-    key: symcrypt_sys::PSYMCRYPT_ECKEY,
+    inner: symcrypt_sys::PSYMCRYPT_ECKEY,
     expanded_curve: EcDhExpandedCurve,
 }
 
@@ -37,7 +37,7 @@ impl EcDhKey {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
             let key = EcDhKey {
-                key: key_ptr,
+                inner: key_ptr,
                 expanded_curve: expanded_curve,
             };
 
@@ -50,8 +50,7 @@ impl EcDhKey {
 impl Drop for EcDhKey {
     fn drop(&mut self) {
         unsafe {
-            symcrypt_sys::SymCryptEckeyFree(self.key);
-            symcrypt_sys::SymCryptEcurveFree(self.expanded_curve.0);
+            symcrypt_sys::SymCryptEckeyFree(self.inner);
         }
     }
 }
@@ -72,7 +71,7 @@ impl EcDh {
 
             match symcrypt_sys::SymCryptEckeySetRandom(
                 symcrypt_sys::SYMCRYPT_FLAG_ECKEY_ECDH,
-                ecdh_key.key,
+                ecdh_key.inner,
             ) {
                 symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                     let instance = EcDh {
@@ -107,7 +106,7 @@ impl EcDh {
                 num_format,
                 ec_point_format,
                 symcrypt_sys::SYMCRYPT_FLAG_ECKEY_ECDH,
-                edch_key.key,
+                edch_key.inner,
             ) {
                 symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                     let instance = EcDh {
@@ -128,14 +127,14 @@ impl EcDh {
         unsafe {
             // SAFETY: FFI calls
             let pub_key_len = symcrypt_sys::SymCryptEckeySizeofPublicKey(
-                self.key.key,
+                self.key.inner,
                 symcrypt_sys::_SYMCRYPT_ECPOINT_FORMAT_SYMCRYPT_ECPOINT_FORMAT_XY,
             );
 
             let mut pub_key_bytes = vec![0u8; pub_key_len as usize];
 
             match symcrypt_sys::SymCryptEckeyGetValue(
-                self.key.key,
+                self.key.inner,
                 std::ptr::null_mut(),
                 0 as symcrypt_sys::SIZE_T,
                 pub_key_bytes.as_mut_ptr(),
@@ -164,8 +163,8 @@ impl EcDh {
             let mut secret = vec![0u8; secret_length as usize];
 
             match symcrypt_sys::SymCryptEcDhSecretAgreement(
-                private.key.key,
-                public.key.key,
+                private.key.inner,
+                public.key.inner,
                 num_format,
                 0,
                 secret.as_mut_ptr(),
