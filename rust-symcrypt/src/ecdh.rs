@@ -1,24 +1,19 @@
 /* EcDh functions. For further documentation please refer to symcrypt.h */
 
-use crate::curve_type::*;
+use crate::ecurve::*;
 use crate::errors::SymCryptError;
 use std::vec;
 use symcrypt_sys;
 
 /// EcDhKey is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY, this is to let rust handle the free'ing of this pointer
 /// EcDhKey must be allocated after EcDhCurve and free'd before EcDhCurve is free'd
-struct EcDhKey {
+pub struct EcDhKey {
     inner: symcrypt_sys::PSYMCRYPT_ECKEY,
-    curve: EcDhCurve,
+    curve: EcCurve,
 }
 
-struct EcDhCurve(symcrypt_sys::PSYMCRYPT_ECURVE);
-
-impl Drop for EcDhCurve {
-    fn drop(&mut self) {
-        unsafe { symcrypt_sys::SymCryptEcurveFree(self.0) }
-    }
-}
+#[derive(Debug)]
+pub struct EcDhSecretAgreement(pub Vec<u8>);
 
 impl EcDhKey {
     pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
@@ -29,7 +24,7 @@ impl EcDhKey {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
             // curve needs to be wrapped to properly free the curve in the case there is an error in EcDhKey initialization
-            let ecdh_curve = EcDhCurve(curve_ptr);
+            let ecdh_curve = EcCurve(curve_ptr);
 
             // Key must be dropped before curve is dropped
             let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(curve_ptr);
@@ -149,14 +144,15 @@ impl EcDh {
         }
     }
 
-    pub fn ecdh_secret_agreement(private: &EcDh, public: &EcDh) -> Result<Vec<u8>, SymCryptError> {
-        
+    pub fn ecdh_secret_agreement(
+        private: &EcDh,
+        public: &EcDh,
+    ) -> Result<EcDhSecretAgreement, SymCryptError> {
         let num_format = get_num_format(private.curve_type);
 
         unsafe {
             // SAFETY: FFI calls
-            let secret_length =
-                symcrypt_sys::SymCryptEcurveSizeofFieldElement(private.key.curve.0);
+            let secret_length = symcrypt_sys::SymCryptEcurveSizeofFieldElement(private.key.curve.0);
             let mut secret = vec![0u8; secret_length as usize];
 
             match symcrypt_sys::SymCryptEcDhSecretAgreement(
@@ -167,7 +163,7 @@ impl EcDh {
                 secret.as_mut_ptr(),
                 secret.len() as symcrypt_sys::SIZE_T,
             ) {
-                symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => Ok(secret),
+                symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => Ok(EcDhSecretAgreement(secret)),
                 err => Err(err.into()),
             }
         }
@@ -200,7 +196,7 @@ mod test {
         let secret_agreement_2 =
             EcDh::ecdh_secret_agreement(&ecdh_2_private, &ecdh_1_public).unwrap();
 
-        assert_eq!(secret_agreement_1, secret_agreement_2);
+        assert_eq!(secret_agreement_1.0, secret_agreement_2.0);
     }
 
     #[test]
@@ -222,7 +218,7 @@ mod test {
         let secret_agreement_2 =
             EcDh::ecdh_secret_agreement(&ecdh_2_private, &ecdh_1_public).unwrap();
 
-        assert_eq!(secret_agreement_1, secret_agreement_2);
+        assert_eq!(secret_agreement_1.0, secret_agreement_2.0);
     }
 
     #[test]
@@ -244,7 +240,7 @@ mod test {
         let secret_agreement_2 =
             EcDh::ecdh_secret_agreement(&ecdh_2_private, &ecdh_1_public).unwrap();
 
-        assert_eq!(secret_agreement_1, secret_agreement_2);
+        assert_eq!(secret_agreement_1.0, secret_agreement_2.0);
     }
 
     #[test]

@@ -26,6 +26,14 @@ pub(crate) fn get_num_format(curve_type: CurveType) -> i32 {
     };
 }
 
+pub struct EcCurve(pub symcrypt_sys::PSYMCRYPT_ECURVE);
+
+impl Drop for EcCurve {
+    fn drop(&mut self) {
+        unsafe { symcrypt_sys::SymCryptEcurveFree(self.0) }
+    }
+}
+
 // TODO: implement lazy static for curve allocations.
 
 // pub(crate) fn convert_curve(curve: CurveType) -> symcrypt_sys::PCSYMCRYPT_ECURVE_PARAMS {
