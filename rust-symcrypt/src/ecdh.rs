@@ -6,15 +6,15 @@ use std::vec;
 use symcrypt_sys;
 
 /// EcDhKey is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY, this is to let rust handle the free'ing of this pointer
-/// EcDhKey must be allocated after EcDhExpandedCurve and free'd before EcDhExpandedCurve is free'd
+/// EcDhKey must be allocated after EcDhCurve and free'd before EcDhCurve is free'd
 struct EcDhKey {
     inner: symcrypt_sys::PSYMCRYPT_ECKEY,
-    expanded_curve: EcDhExpandedCurve,
+    curve: EcDhCurve,
 }
 
-struct EcDhExpandedCurve(symcrypt_sys::PSYMCRYPT_ECURVE);
+struct EcDhCurve(symcrypt_sys::PSYMCRYPT_ECURVE);
 
-impl Drop for EcDhExpandedCurve {
+impl Drop for EcDhCurve {
     fn drop(&mut self) {
         unsafe { symcrypt_sys::SymCryptEcurveFree(self.0) }
     }
@@ -23,13 +23,13 @@ impl Drop for EcDhExpandedCurve {
 impl EcDhKey {
     pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         unsafe {
-            // Allocating expanded_curve needed for key derivation. This pointer must be dropped after the key is dropped.
+            // Allocating curve needed for key derivation. This pointer must be dropped after the key is dropped.
             let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
             if curve_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
-            // expanded_curve needs to be wrapped to properly free the curve in the case there is an error in EcDhKey initialization
-            let expanded_curve = EcDhExpandedCurve(curve_ptr);
+            // curve needs to be wrapped to properly free the curve in the case there is an error in EcDhKey initialization
+            let ecdh_curve = EcDhCurve(curve_ptr);
 
             // Key must be dropped before curve is dropped
             let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(curve_ptr);
@@ -38,7 +38,7 @@ impl EcDhKey {
             }
             let key = EcDhKey {
                 inner: key_ptr,
-                expanded_curve: expanded_curve,
+                curve: ecdh_curve,
             };
 
             Ok(key)
@@ -150,16 +150,13 @@ impl EcDh {
     }
 
     pub fn ecdh_secret_agreement(private: &EcDh, public: &EcDh) -> Result<Vec<u8>, SymCryptError> {
-        if private.curve_type != public.curve_type {
-            return Err(SymCryptError::InvalidArgument);
-        }
-
+        
         let num_format = get_num_format(private.curve_type);
 
         unsafe {
             // SAFETY: FFI calls
             let secret_length =
-                symcrypt_sys::SymCryptEcurveSizeofFieldElement(private.key.expanded_curve.0);
+                symcrypt_sys::SymCryptEcurveSizeofFieldElement(private.key.curve.0);
             let mut secret = vec![0u8; secret_length as usize];
 
             match symcrypt_sys::SymCryptEcDhSecretAgreement(
