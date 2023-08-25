@@ -26,7 +26,7 @@ pub(crate) fn get_num_format(curve_type: CurveType) -> i32 {
     };
 }
 
-pub struct EcCurve(pub symcrypt_sys::PSYMCRYPT_ECURVE);
+pub(crate) struct EcCurve(pub(crate) symcrypt_sys::PSYMCRYPT_ECURVE);
 
 impl Drop for EcCurve {
     fn drop(&mut self) {
