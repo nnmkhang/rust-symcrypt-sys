@@ -19,15 +19,10 @@ impl EcDhKey {
     pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         unsafe {
             // Allocating curve needed for key derivation. This pointer must be dropped after the key is dropped.
-            let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
-            if curve_ptr.is_null() {
-                return Err(SymCryptError::MemoryAllocationFailure);
-            }
-            // curve needs to be wrapped to properly free the curve in the case there is an error in EcDhKey initialization
-            let ecdh_curve = EcCurve(curve_ptr);
+            let ecdh_curve = EcCurve::new(curve)?;
 
             // Key must be dropped before curve is dropped
-            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(curve_ptr);
+            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(ecdh_curve.0);
             if key_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
@@ -35,7 +30,6 @@ impl EcDhKey {
                 inner: key_ptr,
                 curve: ecdh_curve,
             };
-
             Ok(key)
         }
     }

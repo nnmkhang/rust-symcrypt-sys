@@ -1,6 +1,7 @@
 /* Friendly rust types for CurveTypes. */
 
 //use lazy_static::lazy_static;
+use crate::errors::SymCryptError;
 use symcrypt_sys;
 
 #[derive(Copy, Clone, PartialEq)]
@@ -27,6 +28,19 @@ pub(crate) fn get_num_format(curve_type: CurveType) -> i32 {
 }
 
 pub(crate) struct EcCurve(pub(crate) symcrypt_sys::PSYMCRYPT_ECURVE);
+
+impl EcCurve {
+    pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
+        unsafe {
+            let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
+            if curve_ptr.is_null() {
+                return Err(SymCryptError::MemoryAllocationFailure);
+            }
+            // curve needs to be wrapped to properly free the curve in the case there is an error in future initialization in EcDsa or EcDh
+            Ok(EcCurve(curve_ptr))
+        }
+    }
+}
 
 impl Drop for EcCurve {
     fn drop(&mut self) {
