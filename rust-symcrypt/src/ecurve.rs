@@ -30,7 +30,7 @@ pub(crate) fn get_num_format(curve_type: CurveType) -> i32 {
 pub(crate) struct EcCurve(pub(crate) symcrypt_sys::PSYMCRYPT_ECURVE);
 
 impl EcCurve {
-    pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
+    pub(crate) fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         unsafe {
             let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
             if curve_ptr.is_null() {
