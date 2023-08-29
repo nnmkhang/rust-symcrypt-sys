@@ -115,7 +115,6 @@ pub fn hmac_sha256(key: &[u8], data: &[u8], result: &mut [u8; SHA256_HMAC_RESULT
             mem::size_of_val(&mut expanded_key) as symcrypt_sys::SIZE_T,
         );
     }
-    result
 }
 
 pub struct HmacSha384State {
@@ -200,7 +199,6 @@ pub fn hmac_sha384(key: &[u8], data: &[u8], result: &mut [u8; SHA384_HMAC_RESULT
             mem::size_of_val(&mut expanded_key) as symcrypt_sys::SIZE_T,
         );
     }
-    result
 }
 
 #[cfg(test)]
