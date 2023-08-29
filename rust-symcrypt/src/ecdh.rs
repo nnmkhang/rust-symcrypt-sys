@@ -15,6 +15,12 @@ pub struct EcDhKey {
 #[derive(Debug)]
 pub struct EcDhSecretAgreement(pub Vec<u8>);
 
+impl EcDhSecretAgreement {
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 impl EcDhKey {
     pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         unsafe {
@@ -55,7 +61,6 @@ impl EcDh {
     pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         unsafe {
             // SAFETY: FFI calls
-
             let ecdh_key = EcDhKey::new(curve)?;
 
             match symcrypt_sys::SymCryptEckeySetRandom(
@@ -80,9 +85,7 @@ impl EcDh {
         public_key: &[u8],
     ) -> Result<Self, SymCryptError> {
         let num_format = get_num_format(curve);
-
         let ec_point_format = symcrypt_sys::_SYMCRYPT_ECPOINT_FORMAT_SYMCRYPT_ECPOINT_FORMAT_XY;
-
         let edch_key = EcDhKey::new(curve)?;
 
         unsafe {
@@ -190,7 +193,7 @@ mod test {
         let secret_agreement_2 =
             EcDh::ecdh_secret_agreement(&ecdh_2_private, &ecdh_1_public).unwrap();
 
-        assert_eq!(secret_agreement_1.0, secret_agreement_2.0);
+        assert_eq!(secret_agreement_1.as_bytes(), secret_agreement_2.as_bytes());
     }
 
     #[test]
@@ -212,7 +215,7 @@ mod test {
         let secret_agreement_2 =
             EcDh::ecdh_secret_agreement(&ecdh_2_private, &ecdh_1_public).unwrap();
 
-        assert_eq!(secret_agreement_1.0, secret_agreement_2.0);
+        assert_eq!(secret_agreement_1.as_bytes(), secret_agreement_2.as_bytes());
     }
 
     #[test]
@@ -234,7 +237,7 @@ mod test {
         let secret_agreement_2 =
             EcDh::ecdh_secret_agreement(&ecdh_2_private, &ecdh_1_public).unwrap();
 
-        assert_eq!(secret_agreement_1.0, secret_agreement_2.0);
+        assert_eq!(secret_agreement_1.as_bytes(), secret_agreement_2.as_bytes());
     }
 
     #[test]
