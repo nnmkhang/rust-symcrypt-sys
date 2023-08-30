@@ -5,6 +5,7 @@ pub const SYMCRYPT_CODE_VERSION_MINOR: u32 = 1;
 pub const SYMCRYPT_CODE_VERSION_PATCH: u32 = 0;
 pub const SYMCRYPT_SHA256_RESULT_SIZE: u32 = 32;
 pub const SYMCRYPT_SHA384_RESULT_SIZE: u32 = 48;
+pub const SYMCRYPT_FLAG_ECKEY_ECDH: u32 = 8192;
 pub const SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR: SYMCRYPT_ERROR = 0;
 pub const SYMCRYPT_ERROR_SYMCRYPT_UNUSED: SYMCRYPT_ERROR = 32768;
 pub const SYMCRYPT_ERROR_SYMCRYPT_WRONG_KEY_SIZE: SYMCRYPT_ERROR = 32769;
@@ -3863,6 +3864,9 @@ extern "C" {
     pub fn SymCryptEcurveFree(pCurve: PSYMCRYPT_ECURVE);
 }
 extern "C" {
+    pub fn SymCryptSizeofEckeyFromCurve(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
+}
+extern "C" {
     pub fn SymCryptEckeyAllocate(pCurve: PCSYMCRYPT_ECURVE) -> PSYMCRYPT_ECKEY;
 }
 extern "C" {
@@ -3926,6 +3930,15 @@ extern "C" {
 #[cfg(target_os = "linux")]
 extern "C" {
     pub static SymCryptEcurveParamsNistP384: PCSYMCRYPT_ECURVE_PARAMS;
+}
+#[cfg(target_os = "windows")]
+#[link(name = "symcrypttestmodule", kind = "dylib")]
+extern "C" {
+    pub static SymCryptEcurveParamsCurve25519: PCSYMCRYPT_ECURVE_PARAMS;
+}
+#[cfg(target_os = "linux")]
+extern "C" {
+    pub static SymCryptEcurveParamsCurve25519: PCSYMCRYPT_ECURVE_PARAMS;
 }
 extern "C" {
     pub fn SymCryptEckeySizeofPublicKey(
