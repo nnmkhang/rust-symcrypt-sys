@@ -13,7 +13,7 @@ pub struct EcDhKey {
 }
 
 #[derive(Debug)]
-pub struct EcDhSecretAgreement(pub Vec<u8>);
+pub struct EcDhSecretAgreement(Vec<u8>);
 
 impl EcDhSecretAgreement {
     pub fn as_bytes(&self) -> &[u8] {
