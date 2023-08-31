@@ -118,16 +118,10 @@ struct HmacSha384Inner {
     expanded_key: symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY,
 }
 
-// /// doing so would lead to use-after-free and inconsistent states.
-// impl HmacSha256State {
-//     pub fn new(key: &[u8]) -> Self {
-//         let mut instance = HmacSha256State {
-//             inner: Box::pin(HmacSha256Inner { 
-//                 state: symcrypt_sys::SYMCRYPT_HMAC_SHA256_STATE::default(),
-//                 expanded_key: symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default() 
-//             }),
-//         };
-
+/// Using an inner HmacSha384 state that is Pin<Box<T>> since the memory address for Self is moved around when returning from HmacSha384State::new()
+///
+/// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
+/// doing so would lead to use-after-free and inconsistent states.
 impl HmacSha384State {
     pub fn new(key: &[u8]) -> Self {
         let mut instance = HmacSha384State {
@@ -228,24 +222,9 @@ mod test {
         let p_key = hex::decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let data = hex::decode("").unwrap();
         let expected = "915cb2c078aaf5dfb3560cf6d96997e987b2de5cd46f9a2ef92493bfc34bab16";
-        let mut result: [u8; SHA256_HMAC_RESULT_SIZE] = [0; SHA256_HMAC_RESULT_SIZE];
     
-        let mut hmac_test = HmacSha256State::new(&p_key);
+        let hmac_test = HmacSha256State::new(&p_key);
         test_generic_hmac_state(hmac_test, &data, expected)        
-    }
-
-    #[test]
-    pub fn test_hmac() {
-        let p_key = hex::decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
-        let data = hex::decode("").unwrap();
-        let expected = "915cb2c078aaf5dfb3560cf6d96997e987b2de5cd46f9a2ef92493bfc34bab16";
-        let mut hmac_test = HmacSha256State::new(&p_key);
-        let mut result: [u8; SHA256_HMAC_RESULT_SIZE] = [0; SHA256_HMAC_RESULT_SIZE];
-
-
-        hmac_test.append(&data);
-        let result = hmac_test.result();
-        assert_eq!(hex::encode(result), expected);
     }
 
     #[test]
@@ -265,7 +244,6 @@ mod test {
             .unwrap();
         let data = hex::decode("beec952d19e8b3db3a4b7fdb4c1d2ea1c492741ea23ceb92f380b9a29b476eaa51f52b54eb9f096adc79b8e8fb8d675686b3e45466bd0577b4f246537dbeb3d9c2a709e4c383180e7ee86bc872e52baaa8ef4107f41ebbc5799a716b6b50e87c19e976042afca7702682e0a2398b42453430d15ed5c9d62448608212ed65d33a").unwrap();
         let expected = "864c0a933ee2fe540e4444399add1cd94ff6e4e14248eaf6df7127cd12c7a9e0f7bd92b303715c06d1c6481114d22167";
-        let mut result: [u8; SHA384_HMAC_RESULT_SIZE] = [0; SHA384_HMAC_RESULT_SIZE];
 
         let hmac_test = HmacSha384State::new(&p_key);
         test_generic_hmac_state(hmac_test, &data, expected);
