@@ -105,7 +105,6 @@ pub fn hmac_sha256(key: &[u8], data: &[u8], result: &mut [u8; SHA256_HMAC_RESULT
             mem::size_of_val(&mut expanded_key) as symcrypt_sys::SIZE_T,
         );
     }
-    result
 }
 
 
@@ -201,7 +200,6 @@ pub fn hmac_sha384(key: &[u8], data: &[u8], result: &mut [u8; SHA384_HMAC_RESULT
             mem::size_of_val(&mut expanded_key) as symcrypt_sys::SIZE_T,
         );
     }
-    result
 }
 
 #[cfg(test)]
@@ -244,6 +242,7 @@ mod test {
             .unwrap();
         let data = hex::decode("beec952d19e8b3db3a4b7fdb4c1d2ea1c492741ea23ceb92f380b9a29b476eaa51f52b54eb9f096adc79b8e8fb8d675686b3e45466bd0577b4f246537dbeb3d9c2a709e4c383180e7ee86bc872e52baaa8ef4107f41ebbc5799a716b6b50e87c19e976042afca7702682e0a2398b42453430d15ed5c9d62448608212ed65d33a").unwrap();
         let expected = "864c0a933ee2fe540e4444399add1cd94ff6e4e14248eaf6df7127cd12c7a9e0f7bd92b303715c06d1c6481114d22167";
+        let mut result: [u8; SHA384_HMAC_RESULT_SIZE] = [0; SHA384_HMAC_RESULT_SIZE];
 
         let hmac_test = HmacSha384State::new(&p_key);
         test_generic_hmac_state(hmac_test, &data, expected);
