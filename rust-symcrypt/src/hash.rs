@@ -239,6 +239,14 @@ mod test {
     }
 
     #[test]
+    fn test_state_sha256_hash() {
+        let data = hex::decode("").unwrap();
+        let expected: &str = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+        test_generic_hash_state(Sha256State::new(), &data, expected);
+    }
+    
+    #[test]
     fn test_state_sha384_hash() {
         let data = hex::decode("f268267bfb73d5417ac2bc4a5c64").unwrap();
         let expected: &str = "6f246b1f839e73e585c6356c01e9878ff09e9904244ed0914edb4dc7dbe9ceef3f4695988d521d14d30ee40b84a4c3c8";
