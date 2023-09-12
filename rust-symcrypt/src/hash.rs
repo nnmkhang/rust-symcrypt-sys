@@ -9,63 +9,6 @@ use std::pin::Pin;
 pub const SHA256_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA256_RESULT_SIZE as usize;
 pub const SHA384_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA384_RESULT_SIZE as usize;
 
-/// Enum for HashAlgorithms that are currently available
-#[derive(PartialEq, Debug)]
-pub enum HashAlgorithms {
-    SHA256,
-    SHA384,
-}
-
-/// Generic trait for hashing
-/// 
-/// get_output_length() returns the output length for the selected algorithm
-/// 
-/// new_state() returns a hash object that can perform state operations, see ShaXXXState::new() for more info
-/// 
-/// get_algorithm() returns the HashAlgorithm that is currently being used 
-/// 
-// // /// hash() performs a stateless hash for the current HashAlgorithm. For more info see individual stateless functions; shaXXX()
-// pub trait Hash {
-//     type Result;
-//     type State: HashState<Result = Self::Result>;
-
-//     fn get_output_length(&self) -> usize;
-//     fn new_state(&self) -> Self::State;
-//     fn get_algorithm(&self) -> HashAlgorithms;
-//     fn hash(self, data: &[u8]) -> Self::Result;
-// }
-
-
-
-use std::marker::{Send, Sync};
-
-// Implement Send and Sync for HashAlgorithms
-unsafe impl Send for HashAlgorithms {}
-unsafe impl Sync for HashAlgorithms {}
-
-// Implement Send and Sync for HashState
-impl<R: Send> Send for Box<dyn HashState<Result = R>> {}
-impl<R: Sync> Sync for Box<dyn HashState<Result = R>> {}
-
-// Implement Send and Sync for Hash trait
-pub trait Hash: Send + Sync {
-    type Result;
-    type State: HashState<Result = Self::Result>;
-
-    fn get_output_length(&self) -> usize;
-    fn new_state(&self) -> Self::State;
-    fn get_algorithm(&self) -> HashAlgorithms;
-    fn hash(self, data: &[u8]) -> Self::Result;
-}
-
-// Implement Send and Sync for types that implement HashState
-unsafe impl Send for dyn HashState<Result: > {
-    
-}
-unsafe impl Sync for dyn HashState<Result = Box<&[u8]>> {
-    
-}
-
 /// Generic trait for stateful hashing
 /// 
 /// append() appends to be hashed data to the state, this operation can be done multiple times.
@@ -74,37 +17,12 @@ unsafe impl Sync for dyn HashState<Result = Box<&[u8]>> {
 /// To perform other stateful hash operation you must create a new hash object via ShaXXXState::new()
 /// 
 /// copy() creates a copy of the current ShaXXXState
-pub trait HashState: Send + Sync {
+pub trait HashState {
     type Result;
 
     fn append(&mut self, data: &[u8]);
     fn result(self) -> Self::Result;
-    fn copy(&self) -> Box<dyn HashState<Result = Self::Result>>;
-}
-
-/// Hashing trait implementation for Sha256
-pub struct Sha256;
-
-impl Hash for Sha256 {
-
-    type Result = [u8; SHA256_RESULT_SIZE];
-    type State = Sha256State;
-
-    fn get_output_length(&self) -> usize {
-        SHA256_RESULT_SIZE
-    }
-
-    fn new_state(&self) -> Sha256State {
-        Sha256State::new()
-    }
-
-    fn get_algorithm(&self) -> HashAlgorithms {
-        HashAlgorithms::SHA256
-    }
-
-    fn hash(self, data: &[u8]) -> Self::Result {
-        sha256(&data)
-    }
+    fn copy(&self) -> Box<Self>;
 }
 
 /// Sha256State needs to have a heap allocated inner state that is Pin<Box<T>> since the memory address of Self is moved around when implementing 
@@ -152,7 +70,7 @@ impl HashState for Sha256State {
         result
     }
 
-    fn copy(&self) -> Box<dyn HashState<Result = Self::Result>> {
+    fn copy(&self) -> Box<Self> {
         let mut new_state = Sha256State {
             state: Box::pin(Sha256InnerState(symcrypt_sys::SYMCRYPT_SHA256_STATE::default())),
         };
@@ -174,7 +92,7 @@ impl Drop for Sha256State {
     }
 }
 
-/// Stateless hash function for SHA256, this can be called alone without the use of the Hash trait
+/// Stateless hash function for SHA256
 pub fn sha256(data: &[u8]) -> [u8; SHA256_RESULT_SIZE] {
     let mut result = [0; SHA256_RESULT_SIZE];
     unsafe { // SAFETY: FFI calls
@@ -186,31 +104,6 @@ pub fn sha256(data: &[u8]) -> [u8; SHA256_RESULT_SIZE] {
     }
     result
 }
-
-/// Hashing trait implementation for Sha384
-pub struct Sha384;
-
-impl Hash for Sha384 {
-
-    type Result = [u8; SHA384_RESULT_SIZE];
-    type State = Sha384State;
-
-    fn get_output_length(&self) -> usize {
-        SHA384_RESULT_SIZE
-    }
-
-    fn new_state(&self) -> Sha384State {
-        Sha384State::new()
-    }
-
-    fn get_algorithm(&self) -> HashAlgorithms {
-        HashAlgorithms::SHA384
-    }
-
-    fn hash(self, data: &[u8]) -> Self::Result {
-        sha384(&data)
-    }
-}   
 
 /// Sha384State needs to have a heap allocated inner state that is Pin<Box<T>> since the memory address of Self is moved around when implementing 
 /// HashState Result field.
@@ -257,7 +150,7 @@ impl HashState for Sha384State {
         result
     }
 
-    fn copy(&self) -> Box<dyn HashState<Result = Self::Result>> {
+    fn copy(&self) -> Box<Self> {
         let mut new_state = Sha384State {
             state: Box::pin(Sha384InnerState(symcrypt_sys::SYMCRYPT_SHA384_STATE::default())),
         };
@@ -312,7 +205,8 @@ mod test {
         hash_state.append(&data);
         let new_hash_state = hash_state.copy();
 
-        //assert_eq!(hex::encode(new_hash_state.result()), hex::encode(hash_state.result()));
+        let result = new_hash_state.result();
+        assert_eq!(hex::encode(result), hex::encode(hash_state.result()));
     }
 
     fn test_generic_state_multiple_append<H: HashState>(mut hash_state: H, data_1: &[u8], data_2: &[u8], expected: &str)
@@ -326,31 +220,6 @@ mod test {
         assert_eq!(hex::encode(result), expected);
     }
 
-    fn test_generic_hash_create_new_state<H: Hash>(hash: H, data: &[u8], expected: &str)
-    where
-        H::Result: AsRef<[u8]>,
-    {
-        let mut hash_state = hash.new_state();
-        hash_state.append(&data);
-        let result = hash_state.result();
-        assert_eq!(hex::encode(result), expected);
-    }
-
-
-    fn test_generic_hash_stateless_hash<H: Hash>(hash: H, data: &[u8], expected: &str, alg_type: HashAlgorithms, output_len: usize) 
-    where
-        H::Result: AsRef<[u8]>,
-    {
-        let alg = hash.get_algorithm();
-        assert_eq!(alg, alg_type);
-
-        let len = hash.get_output_length();
-        assert_eq!(len, output_len);
-
-        let result = hash.hash(&data);
-        assert_eq!(hex::encode(result), expected);
-    }
-
     #[test]
     fn test_stateless_sha256_hash() {
         let data = hex::decode("641ec2cf711e").unwrap();
@@ -358,46 +227,6 @@ mod test {
 
         let result = sha256(&data);
         assert_eq!(hex::encode(result), expected);
-    }
-
-    #[test]
-    fn test_hash_trait_sha256() {
-        let data = hex::decode("641ec2cf711e").unwrap();
-        let expected: &str = "cfdbd6c9acf9842ce04e8e6a0421838f858559cf22d2ea8a38bd07d5e4692233";
-
-        test_generic_hash_create_new_state(Sha256, &data, expected);
-    }
-
-    #[test]
-    fn test_hash_trait_sha384() {
-        let data = hex::decode("").unwrap();
-        let expected: &str = "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b";
-
-        test_generic_hash_create_new_state(Sha384, &data, expected);
-    }
-
-    #[test]
-    fn test_hash_trait_stateless_sha256() {
-        let data = hex::decode("641ec2cf711e").unwrap();
-        let expected: &str = "cfdbd6c9acf9842ce04e8e6a0421838f858559cf22d2ea8a38bd07d5e4692233";
-
-        test_generic_hash_stateless_hash(Sha256, &data, expected, HashAlgorithms::SHA256, SHA256_RESULT_SIZE);
-    }
-
-    #[test]
-    fn test_hash_trait_stateless_sha384() {
-        let data = hex::decode("").unwrap();
-        let expected: &str = "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b";
-
-        test_generic_hash_stateless_hash(Sha384, &data, expected, HashAlgorithms::SHA384, SHA384_RESULT_SIZE);
-    }
-
-    #[test]
-    fn test_state_sha256_hash() {
-        let data = hex::decode("").unwrap();
-        let expected: &str = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-
-        test_generic_hash_state(Sha256State::new(), &data, expected);
     }
 
     #[test]
