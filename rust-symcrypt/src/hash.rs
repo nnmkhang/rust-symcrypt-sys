@@ -191,7 +191,7 @@ impl Drop for Sha384State {
     }
 }
 
-/// Stateless hash function for SHA384, this can be called alone without the use of the Hash trait
+/// Stateless hash function for SHA384.
 pub fn sha384(data: &[u8]) -> [u8; SHA384_RESULT_SIZE] {
     let mut result = [0; SHA384_RESULT_SIZE];
     unsafe {
