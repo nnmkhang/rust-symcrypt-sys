@@ -70,13 +70,13 @@ unsafe impl Sync for HmacSha256Inner {
 
 impl HmacSha256State {
     pub fn new(key: &[u8]) -> Result<Self, SymCryptError> {
-        let mut expanded_key = Pin::new(Box::new(
-            symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default(),
+        let mut expanded_key = HmacSha256ExpandedKey(Pin::new(Box::new(
+            symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default()),
         ));
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptHmacSha256ExpandKey(
-                &mut *expanded_key,
+                &mut *expanded_key.0,
                 key.as_ptr(),
                 key.len() as symcrypt_sys::SIZE_T,
             ) {
@@ -84,7 +84,7 @@ impl HmacSha256State {
                     let mut instance = HmacSha256State {
                         inner: Box::pin(HmacSha256Inner {
                             state: symcrypt_sys::SYMCRYPT_HMAC_SHA256_STATE::default(),
-                            expanded_key: Arc::new(HmacSha256ExpandedKey(expanded_key)),
+                            expanded_key: Arc::new(expanded_key),
                         }),
                     };
                     symcrypt_sys::SymCryptHmacSha256Init(
@@ -161,23 +161,18 @@ pub fn hmac_sha256(
 ) -> Result<(), SymCryptError> {
     unsafe {
         // SAFETY: FFI calls
-        let mut expanded_key = symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default();
+        let mut expanded_key = HmacSha256ExpandedKey(Pin::new(Box::new(symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default())));
         match symcrypt_sys::SymCryptHmacSha256ExpandKey(
-            &mut expanded_key,
+            &mut *expanded_key.0,
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
         ) {
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                 symcrypt_sys::SymCryptHmacSha256(
-                    &mut expanded_key,
+                    &mut *expanded_key.0,
                     data.as_ptr(),
                     data.len() as symcrypt_sys::SIZE_T,
                     result.as_mut_ptr(),
-                );
-
-                symcrypt_sys::SymCryptWipe(
-                    ptr::addr_of_mut!(expanded_key) as *mut c_void,
-                    mem::size_of_val(&mut expanded_key) as symcrypt_sys::SIZE_T,
                 );
                 Ok(())
             }
@@ -227,13 +222,13 @@ unsafe impl Sync for HmacSha384Inner {
 
 impl HmacSha384State {
     pub fn new(key: &[u8]) -> Result<Self, SymCryptError> {
-        let mut expanded_key = Pin::new(Box::new(
-            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default(),
+        let mut expanded_key = HmacSha384ExpandedKey(Pin::new(Box::new(
+            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default()),
         ));
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptHmacSha384ExpandKey(
-                &mut *expanded_key,
+                &mut *expanded_key.0,
                 key.as_ptr(),
                 key.len() as symcrypt_sys::SIZE_T,
             ) {
@@ -241,7 +236,7 @@ impl HmacSha384State {
                     let mut instance = HmacSha384State {
                         inner: Box::pin(HmacSha384Inner {
                             state: symcrypt_sys::SYMCRYPT_HMAC_SHA384_STATE::default(),
-                            expanded_key: Arc::new(HmacSha384ExpandedKey(expanded_key)),
+                            expanded_key: Arc::new(expanded_key),
                         }),
                     };
                     symcrypt_sys::SymCryptHmacSha384Init(
@@ -318,23 +313,18 @@ pub fn hmac_sha384(
 ) -> Result<(), SymCryptError> {
     unsafe {
         // SAFETY: FFI calls
-        let mut expanded_key = symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default();
+        let mut expanded_key = HmacSha384ExpandedKey(Pin::new(Box::new(symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default())));
         match symcrypt_sys::SymCryptHmacSha384ExpandKey(
-            &mut expanded_key,
+            &mut *expanded_key.0,
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
         ) {
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                 symcrypt_sys::SymCryptHmacSha384(
-                    &mut expanded_key,
+                    &mut *expanded_key.0,
                     data.as_ptr(),
                     data.len() as symcrypt_sys::SIZE_T,
                     result.as_mut_ptr(),
-                );
-
-                symcrypt_sys::SymCryptWipe(
-                    ptr::addr_of_mut!(expanded_key) as *mut c_void,
-                    mem::size_of_val(&mut expanded_key) as symcrypt_sys::SIZE_T,
                 );
                 Ok(())
             }
