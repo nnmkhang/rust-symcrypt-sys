@@ -1,4 +1,4 @@
-//! EcDh functions. For further documentation please refer to symcrypt.h 
+//! EcDh functions. For further documentation please refer to symcrypt.h
 
 use crate::ecurve::*;
 use crate::errors::SymCryptError;

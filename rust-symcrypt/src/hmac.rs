@@ -53,9 +53,9 @@ pub struct HmacSha256State {
     inner: Pin<Box<HmacSha256Inner>>,
 }
 
-/// Must Arc<> the expanded_key field since it must be ref counted, clones of HmacSha265State will reference the same expanded key. Pin<> on the key 
-/// is to ensure that address is not moved throughout the expanded key's lifetime. 
-/// 
+/// Must Arc<> the expanded_key field since it must be ref counted, clones of HmacSha265State will reference the same expanded key. Pin<> on the key
+/// is to ensure that address is not moved throughout the expanded key's lifetime.
+///
 /// This semantic is not needed for the state field since it is initialized in line with HmacSha256Inner initialization.
 struct HmacSha256Inner {
     state: symcrypt_sys::SYMCRYPT_HMAC_SHA256_STATE,
@@ -73,8 +73,8 @@ unsafe impl Sync for HmacSha256Inner {
 impl HmacSha256State {
     pub fn new(key: &[u8]) -> Result<Self, SymCryptError> {
         let mut expanded_key = Arc::new(HmacSha256ExpandedKey(
-            symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default()),
-        );
+            symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default(),
+        ));
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptHmacSha256ExpandKey(
@@ -162,14 +162,14 @@ impl Drop for HmacSha256State {
 /// Stateless Hmac functions for Sha256, using Result<> here for more friendly rust
 pub fn hmac_sha256(
     key: &[u8],
-    data: &[u8]
+    data: &[u8],
 ) -> Result<[u8; SHA256_HMAC_RESULT_SIZE], SymCryptError> {
     let mut result = [0u8; SHA256_HMAC_RESULT_SIZE];
     unsafe {
         // SAFETY: FFI calls
         let mut expanded_key = Arc::new(HmacSha256ExpandedKey(
-            symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default()),
-        );
+            symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default(),
+        ));
         match symcrypt_sys::SymCryptHmacSha256ExpandKey(
             &mut (Arc::get_mut(&mut expanded_key).unwrap()).0, // Arc::get_mut() to unbind the Arc<>, &mut (T).0 to get raw pointer for SymCrypt
             key.as_ptr(),
@@ -215,9 +215,9 @@ pub struct HmacSha384State {
     inner: Pin<Box<HmacSha384Inner>>,
 }
 
-/// Must Arc<> the expanded_key field since it must be ref counted, clones of HmacSha384tate will reference the same expanded key. Pin<> on the key 
-/// is to ensure that address is not moved throughout the expanded key's lifetime. 
-/// 
+/// Must Arc<> the expanded_key field since it must be ref counted, clones of HmacSha384tate will reference the same expanded key. Pin<> on the key
+/// is to ensure that address is not moved throughout the expanded key's lifetime.
+///
 /// This semantic is not needed for the state field since it is initialized in line with HmacSha384Inner initialization.
 struct HmacSha384Inner {
     state: symcrypt_sys::SYMCRYPT_HMAC_SHA384_STATE,
@@ -235,7 +235,8 @@ unsafe impl Sync for HmacSha384Inner {
 impl HmacSha384State {
     pub fn new(key: &[u8]) -> Result<Self, SymCryptError> {
         let mut expanded_key = Arc::new(HmacSha384ExpandedKey(
-            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default()));
+            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default(),
+        ));
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptHmacSha384ExpandKey(
@@ -284,7 +285,7 @@ impl HmacState for HmacSha384State {
         }
         result
     }
-} 
+}
 
 /// Creates a clone of the current HmacSha384State. Clone will create a new state field but will reference the same
 /// expanded_key of the current HmacSha384State; therefore increasing the refcount on expanded_key field.
@@ -323,14 +324,15 @@ impl Drop for HmacSha384State {
 /// Stateless Hmac functions for Sha384, using Result<> here for more friendly rust
 pub fn hmac_sha384(
     key: &[u8],
-    data: &[u8]
+    data: &[u8],
 ) -> Result<[u8; SHA384_HMAC_RESULT_SIZE], SymCryptError> {
     let mut result = [0u8; SHA384_HMAC_RESULT_SIZE];
     unsafe {
         // SAFETY: FFI calls
-    let mut expanded_key = Arc::new(HmacSha384ExpandedKey(
-            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default()));
-            match symcrypt_sys::SymCryptHmacSha384ExpandKey(
+        let mut expanded_key = Arc::new(HmacSha384ExpandedKey(
+            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default(),
+        ));
+        match symcrypt_sys::SymCryptHmacSha384ExpandKey(
             &mut (Arc::get_mut(&mut expanded_key).unwrap()).0, // Arc::get_mut() to unbind the Arc<>, &mut (T).0 to get raw pointer for SymCrypt
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
