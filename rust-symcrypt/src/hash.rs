@@ -1,4 +1,4 @@
-/* Hashing functions. For further documentation please refer to symcrypt.h */
+//! Hashing functions. For further documentation please refer to symcrypt.h
 
 use core::ffi::c_void;
 use std::mem;
@@ -11,18 +11,15 @@ pub const SHA384_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA384_RESULT_SIZE 
 
 /// Generic trait for stateful hashing
 ///
-/// append() appends to be hashed data to the state, this operation can be done multiple times.
+/// [`append()`] appends to be hashed data to the state, this operation can be done multiple times.
 ///
-/// result() returns the result of the hash. Once result() is called, the lifetime of the ShaXXXState is finished.
-/// To perform other stateful hash operation you must create a new hash object via ShaXXXState::new()
-///
-/// copy() creates a copy of the current ShaXXXState
-pub trait HashState {
+/// [`result()`] returns the result of the hash. The state is re-initialized and ready for re-use; you do not have to call
+/// SymCryptXXXInit on the state to start another fresh hash computation.
+pub trait HashState: Clone {
     type Result;
 
     fn append(&mut self, data: &[u8]);
-    fn result(self) -> Self::Result;
-    fn copy(&self) -> Box<Self>;
+    fn result(&mut self) -> Self::Result;
 }
 
 /// Sha256State needs to have a heap allocated inner state that is Pin<Box<T>> since the memory address of Self is moved around when implementing
@@ -66,7 +63,7 @@ impl HashState for Sha256State {
         }
     }
 
-    fn result(mut self) -> Self::Result {
+    fn result(&mut self) -> Self::Result {
         let mut result = [0u8; SHA256_RESULT_SIZE];
         unsafe {
             // SAFETY: FFI calls
@@ -74,8 +71,11 @@ impl HashState for Sha256State {
         }
         result
     }
+}
 
-    fn copy(&self) -> Box<Self> {
+/// Clone creates a new copy of the current Sha256State.
+impl Clone for Sha256State {
+    fn clone(&self) -> Self {
         let mut new_state = Sha256State {
             state: Box::pin(Sha256InnerState(
                 symcrypt_sys::SYMCRYPT_SHA256_STATE::default(),
@@ -85,7 +85,7 @@ impl HashState for Sha256State {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptSha256StateCopy(&self.state.0, &mut new_state.state.0);
         }
-        Box::new(new_state)
+        new_state
     }
 }
 
@@ -156,7 +156,7 @@ impl HashState for Sha384State {
         }
     }
 
-    fn result(mut self) -> Self::Result {
+    fn result(&mut self) -> Self::Result {
         let mut result = [0u8; SHA384_RESULT_SIZE];
         unsafe {
             // SAFETY: FFI calls
@@ -164,8 +164,11 @@ impl HashState for Sha384State {
         }
         result
     }
+}
 
-    fn copy(&self) -> Box<Self> {
+/// Clone creates a new copy of the current Sha384State.
+impl Clone for Sha384State {
+    fn clone(&self) -> Self {
         let mut new_state = Sha384State {
             state: Box::pin(Sha384InnerState(
                 symcrypt_sys::SYMCRYPT_SHA384_STATE::default(),
@@ -175,7 +178,7 @@ impl HashState for Sha384State {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptSha384StateCopy(&self.state.0, &mut new_state.state.0);
         }
-        Box::new(new_state)
+        new_state
     }
 }
 
@@ -223,7 +226,7 @@ mod test {
         H::Result: AsRef<[u8]>,
     {
         hash_state.append(&data);
-        let new_hash_state = hash_state.copy();
+        let mut new_hash_state = hash_state.clone();
 
         let result = new_hash_state.result();
         assert_eq!(hex::encode(result), hex::encode(hash_state.result()));

@@ -1,4 +1,4 @@
-/* ChaChaPoly1305 Functions. For further documentation please refer to symcrypt.h */
+//! ChaChaPoly1305 Functions. For further documentation please refer to symcrypt.h
 
 use crate::errors::SymCryptError;
 use std::vec;

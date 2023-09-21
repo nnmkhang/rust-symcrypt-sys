@@ -1,4 +1,4 @@
-/* Galois Counter Mode functions. For further documentation please refer to symcrypt.h */
+//! Galois Counter Mode functions. For further documentation please refer to symcrypt.h
 
 use crate::block_ciphers::*;
 use crate::errors::SymCryptError;

@@ -1,4 +1,4 @@
-/* Hmac functions. For further documentation please refer to symcrypt.h */
+//! Hmac functions. For further documentation please refer to symcrypt.h
 
 use crate::errors::SymCryptError;
 use core::ffi::c_void;
@@ -13,24 +13,20 @@ pub const SHA384_HMAC_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA384_RESULT_
 
 /// Generic trait for stateful Hmac functions
 ///
-/// append() appends data to the HmacShaXXXState, this operation can be done multiple times.
+/// [`append()`] appends data to the HmacShaXXXState, this operation can be done multiple times.
 ///
-/// result() returns the result of the Hmac. Once result() is called, the lifetime of the HmacShaXXXState is
+/// [`result()`] returns the result of the Hmac. Once result() is called, the lifetime of the HmacShaXXXState is
 /// finished and HmacShaXXState will be drop()'d. To perform other stateful hash operation you must create
 /// a new hash object via HmacShaXXXState::new()
-///
-/// copy() creates a copy of the current HmacShaXXXState. copy() will create a new state but will reference the same
-/// expanded_key of the current HmacShaXXXState; therefore increasing the refcount of the HmacShaXXXExpandedKey struct.
-pub trait HmacState {
+pub trait HmacState: Clone {
     type Result;
 
     fn append(&mut self, data: &[u8]);
     fn result(self) -> Self::Result;
-    fn copy(&self) -> Box<Self>;
 }
 
-/// Wrapper for the expanded key that is Pin<Box<>>'d because we want to ensure that its memory address is heap allocated and not moved through its lifetime.
-struct HmacSha256ExpandedKey(Pin<Box<symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY>>);
+/// Wrapper for the expanded key that is Box<>'d because we want to ensure that its memory address is heap allocated.
+struct HmacSha256ExpandedKey(Box<symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY>);
 
 /// Since HmacSha256ExpandedKey can be referenced multiple times, HmacSha256ExpandedKey must be ref counted and a there needs to be a separate drop()
 impl Drop for HmacSha256ExpandedKey {
@@ -70,9 +66,9 @@ unsafe impl Sync for HmacSha256Inner {
 
 impl HmacSha256State {
     pub fn new(key: &[u8]) -> Result<Self, SymCryptError> {
-        let mut expanded_key = HmacSha256ExpandedKey(Pin::new(Box::new(
+        let mut expanded_key = HmacSha256ExpandedKey(Box::new(
             symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default()),
-        ));
+        );
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptHmacSha256ExpandKey(
@@ -121,8 +117,12 @@ impl HmacState for HmacSha256State {
         }
         result
     }
+}
 
-    fn copy(&self) -> Box<Self> {
+/// Creates a copy of the current HmacSha256State. Clone will create a new state but will reference the same
+/// expanded_key of the current HmacSha256State; therefore increasing the refcount of the HmacSha256ExpandedKey struct.
+impl Clone for HmacSha256State {
+    fn clone(&self) -> Self {
         let mut new_state = HmacSha256State {
             inner: Box::pin(HmacSha256Inner {
                 state: symcrypt_sys::SYMCRYPT_HMAC_SHA256_STATE::default(),
@@ -137,7 +137,7 @@ impl HmacState for HmacSha256State {
                 &mut new_state.inner.state,
             );
         }
-        Box::new(new_state)
+        new_state
     }
 }
 
@@ -153,15 +153,15 @@ impl Drop for HmacSha256State {
     }
 }
 
-/// Stateless Hmac functions for Sha256
+/// Stateless Hmac functions for Sha256, using Result<> here for more friendly rust
 pub fn hmac_sha256(
     key: &[u8],
-    data: &[u8],
-    result: &mut [u8; SHA256_HMAC_RESULT_SIZE],
-) -> Result<(), SymCryptError> {
+    data: &[u8]
+) -> Result<[u8; SHA256_HMAC_RESULT_SIZE], SymCryptError> {
+    let mut result = [0u8; SHA256_HMAC_RESULT_SIZE];
     unsafe {
         // SAFETY: FFI calls
-        let mut expanded_key = HmacSha256ExpandedKey(Pin::new(Box::new(symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default())));
+        let mut expanded_key = HmacSha256ExpandedKey(Box::new(symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default()));
         match symcrypt_sys::SymCryptHmacSha256ExpandKey(
             &mut *expanded_key.0,
             key.as_ptr(),
@@ -174,7 +174,7 @@ pub fn hmac_sha256(
                     data.len() as symcrypt_sys::SIZE_T,
                     result.as_mut_ptr(),
                 );
-                Ok(())
+                Ok(result)
             }
             err => Err(err.into()),
         }
@@ -273,8 +273,12 @@ impl HmacState for HmacSha384State {
         }
         result
     }
+} 
 
-    fn copy(&self) -> Box<Self> {
+/// Creates a copy of the current HmacSha384State. Clone will create a new state but will reference the same
+/// expanded_key of the current HmacSha384State; therefore increasing the refcount of the HmacSha384ExpandedKey struct.
+impl Clone for HmacSha384State {
+    fn clone(&self) -> Self {
         let mut new_state = HmacSha384State {
             inner: Box::pin(HmacSha384Inner {
                 state: symcrypt_sys::SYMCRYPT_HMAC_SHA384_STATE::default(),
@@ -289,7 +293,7 @@ impl HmacState for HmacSha384State {
                 &mut new_state.inner.state,
             );
         }
-        Box::new(new_state)
+        new_state
     }
 }
 
@@ -305,12 +309,12 @@ impl Drop for HmacSha384State {
     }
 }
 
-/// Stateless Hmac functions for Sha384
+/// Stateless Hmac functions for Sha384, using Result<> here for more friendly rust
 pub fn hmac_sha384(
     key: &[u8],
-    data: &[u8],
-    result: &mut [u8; SHA384_HMAC_RESULT_SIZE],
-) -> Result<(), SymCryptError> {
+    data: &[u8]
+) -> Result<[u8; SHA384_HMAC_RESULT_SIZE], SymCryptError> {
+    let mut result = [0u8; SHA384_HMAC_RESULT_SIZE];
     unsafe {
         // SAFETY: FFI calls
         let mut expanded_key = HmacSha384ExpandedKey(Pin::new(Box::new(symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default())));
@@ -326,7 +330,7 @@ pub fn hmac_sha384(
                     data.len() as symcrypt_sys::SIZE_T,
                     result.as_mut_ptr(),
                 );
-                Ok(())
+                Ok(result)
             }
             err => Err(err.into()),
         }
@@ -351,7 +355,7 @@ mod test {
         H::Result: AsRef<[u8]>,
     {
         hmac_state.append(&data);
-        let new_hmac_state = hmac_state.copy();
+        let new_hmac_state = hmac_state.clone();
 
         let result = new_hmac_state.result();
         assert_eq!(hex::encode(result), hex::encode(hmac_state.result()));
@@ -411,9 +415,8 @@ mod test {
         let p_key = hex::decode("0a71d5cf99849bc13d73832dcd864244").unwrap();
         let data = hex::decode("17f1ee0c6767a1f3f04bb3c1b7a4e0d4f0e59e5963c1a3bf1540a76b25136baef425faf488722e3e331c77d26fbbd8300df532498f50c5ecd243f481f09348f964ddb8056f6e2886bb5b2f453fcf1de5629f3d166324570bf849792d35e3f711b041b1a7e30494b5d1316484ed85b8da37094627a8e66003d079bfd8beaa80dc").unwrap();
         let expected = "2a0f542090b51b84465cd93e5ddeeaa14ca51162f48047835d2df845fb488af4";
-        let mut result: [u8; SHA256_HMAC_RESULT_SIZE] = [0; SHA256_HMAC_RESULT_SIZE];
 
-        hmac_sha256(&p_key, &data, &mut result).unwrap();
+        let result = hmac_sha256(&p_key, &data).unwrap();
         assert_eq!(hex::encode(result), expected);
     }
 
@@ -461,7 +464,7 @@ mod test {
         let expected = "ad88735f29e167dabded11b57e168f0b773b2985f4c2d2234c8d7a6bf01e2a791590bc0165003f9a7e47c4c687622fd6";
         let mut result: [u8; SHA384_HMAC_RESULT_SIZE] = [0; SHA384_HMAC_RESULT_SIZE];
 
-        hmac_sha384(&p_key, &data, &mut result).unwrap();
+        result = hmac_sha384(&p_key, &data).unwrap();
         assert_eq!(hex::encode(result), expected);
     }
 }
