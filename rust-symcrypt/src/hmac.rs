@@ -17,7 +17,9 @@ pub const SHA384_HMAC_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA384_RESULT_
 ///
 /// [`result()`] returns the result of the Hmac. Once result() is called, the lifetime of the HmacShaXXXState is
 /// finished and HmacShaXXState will be drop()'d. To perform other stateful hash operation you must create
-/// a new hash object via HmacShaXXXState::new()
+/// a new hash object via HmacShaXXXState::new(). This behaviour is different from hash function states that are re-initialized for
+/// use by the Result routine. This difference is by design; re-initializing a hash state is a safe operation. Re-initializing a
+/// MAC state puts keying information in the state, and callers would have to wipe the MAC state explicitly.
 pub trait HmacState: Clone {
     type Result;
 
@@ -25,8 +27,8 @@ pub trait HmacState: Clone {
     fn result(self) -> Self::Result;
 }
 
-/// Wrapper for the expanded key that is Box<>'d because we want to ensure that its memory address is heap allocated.
-struct HmacSha256ExpandedKey(Box<symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY>);
+/// Wrapping the expanded key so that it can be independently dropped after it's ref count has gone to 0
+struct HmacSha256ExpandedKey(symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY);
 
 /// Since HmacSha256ExpandedKey can be referenced multiple times, HmacSha256ExpandedKey must be ref counted and a there needs to be a separate drop()
 impl Drop for HmacSha256ExpandedKey {
@@ -34,8 +36,8 @@ impl Drop for HmacSha256ExpandedKey {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptWipe(
-                ptr::addr_of_mut!(*self.0) as *mut c_void, // * to dereference the Box<>
-                mem::size_of_val(&mut *self.0) as symcrypt_sys::SIZE_T, // * to dereference the Box<>
+                ptr::addr_of_mut!(self.0) as *mut c_void,
+                mem::size_of_val(&mut self.0) as symcrypt_sys::SIZE_T,
             );
         }
     }
@@ -51,9 +53,13 @@ pub struct HmacSha256State {
     inner: Pin<Box<HmacSha256Inner>>,
 }
 
+/// Must Arc<> the expanded_key field since it must be ref counted, clones of HmacSha265State will reference the same expanded key. Pin<> on the key 
+/// is to ensure that address is not moved throughout the expanded key's lifetime. 
+/// 
+/// This semantic is not needed for the state field since it is initialized in line with HmacSha256Inner initialization.
 struct HmacSha256Inner {
     state: symcrypt_sys::SYMCRYPT_HMAC_SHA256_STATE,
-    expanded_key: Arc<HmacSha256ExpandedKey>,
+    expanded_key: Pin<Arc<HmacSha256ExpandedKey>>,
 }
 
 unsafe impl Send for HmacSha256Inner {
@@ -66,13 +72,13 @@ unsafe impl Sync for HmacSha256Inner {
 
 impl HmacSha256State {
     pub fn new(key: &[u8]) -> Result<Self, SymCryptError> {
-        let mut expanded_key = HmacSha256ExpandedKey(Box::new(
+        let mut expanded_key = Arc::new(HmacSha256ExpandedKey(
             symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default()),
         );
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptHmacSha256ExpandKey(
-                &mut *expanded_key.0,
+                &mut (Arc::get_mut(&mut expanded_key).unwrap()).0, // Arc::get_mut() to unbind the Arc<>, &mut (T).0 to get raw pointer for SymCrypt
                 key.as_ptr(),
                 key.len() as symcrypt_sys::SIZE_T,
             ) {
@@ -80,12 +86,12 @@ impl HmacSha256State {
                     let mut instance = HmacSha256State {
                         inner: Box::pin(HmacSha256Inner {
                             state: symcrypt_sys::SYMCRYPT_HMAC_SHA256_STATE::default(),
-                            expanded_key: Arc::new(expanded_key),
+                            expanded_key: Pin::new(expanded_key),
                         }),
                     };
                     symcrypt_sys::SymCryptHmacSha256Init(
                         &mut instance.inner.state,
-                        &*instance.inner.expanded_key.0,
+                        &instance.inner.expanded_key.0,
                     );
                     Ok(instance)
                 }
@@ -119,21 +125,21 @@ impl HmacState for HmacSha256State {
     }
 }
 
-/// Creates a copy of the current HmacSha256State. Clone will create a new state but will reference the same
-/// expanded_key of the current HmacSha256State; therefore increasing the refcount of the HmacSha256ExpandedKey struct.
+/// Creates a clone of the current HmacSha256State. Clone will create a new state field but will reference the same
+/// expanded_key of the current HmacSha256State; therefore increasing the refcount on expanded_key field.
 impl Clone for HmacSha256State {
     fn clone(&self) -> Self {
         let mut new_state = HmacSha256State {
             inner: Box::pin(HmacSha256Inner {
                 state: symcrypt_sys::SYMCRYPT_HMAC_SHA256_STATE::default(),
-                expanded_key: Arc::clone(&self.inner.expanded_key),
+                expanded_key: Pin::clone(&self.inner.expanded_key),
             }),
         };
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptHmacSha256StateCopy(
                 &self.inner.state,
-                &*self.inner.expanded_key.0,
+                &self.inner.expanded_key.0,
                 &mut new_state.inner.state,
             );
         }
@@ -161,15 +167,17 @@ pub fn hmac_sha256(
     let mut result = [0u8; SHA256_HMAC_RESULT_SIZE];
     unsafe {
         // SAFETY: FFI calls
-        let mut expanded_key = HmacSha256ExpandedKey(Box::new(symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default()));
+        let mut expanded_key = Arc::new(HmacSha256ExpandedKey(
+            symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default()),
+        );
         match symcrypt_sys::SymCryptHmacSha256ExpandKey(
-            &mut *expanded_key.0,
+            &mut (Arc::get_mut(&mut expanded_key).unwrap()).0, // Arc::get_mut() to unbind the Arc<>, &mut (T).0 to get raw pointer for SymCrypt
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
         ) {
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                 symcrypt_sys::SymCryptHmacSha256(
-                    &mut *expanded_key.0,
+                    &mut (Arc::get_mut(&mut expanded_key).unwrap()).0,
                     data.as_ptr(),
                     data.len() as symcrypt_sys::SIZE_T,
                     result.as_mut_ptr(),
@@ -181,8 +189,8 @@ pub fn hmac_sha256(
     }
 }
 
-/// Wrapper for the expanded key that is Pin<Box<>>'d because we want to ensure that its memory address is heap allocated and not moved through its lifetime.
-struct HmacSha384ExpandedKey(Pin<Box<symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY>>);
+/// Wrapping the expanded key so that it can be independently dropped after it's ref count has gone to 0
+struct HmacSha384ExpandedKey(symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY);
 
 /// Since HmacSha384ExpandedKey can be referenced multiple times, HmacSha384ExpandedKey must be ref counted and a there needs to be a separate drop()
 impl Drop for HmacSha384ExpandedKey {
@@ -190,8 +198,8 @@ impl Drop for HmacSha384ExpandedKey {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptWipe(
-                ptr::addr_of_mut!(*self.0) as *mut c_void,
-                mem::size_of_val(&mut *self.0) as symcrypt_sys::SIZE_T,
+                ptr::addr_of_mut!(self.0) as *mut c_void,
+                mem::size_of_val(&mut self.0) as symcrypt_sys::SIZE_T,
             );
         }
     }
@@ -207,9 +215,13 @@ pub struct HmacSha384State {
     inner: Pin<Box<HmacSha384Inner>>,
 }
 
+/// Must Arc<> the expanded_key field since it must be ref counted, clones of HmacSha384tate will reference the same expanded key. Pin<> on the key 
+/// is to ensure that address is not moved throughout the expanded key's lifetime. 
+/// 
+/// This semantic is not needed for the state field since it is initialized in line with HmacSha384Inner initialization.
 struct HmacSha384Inner {
     state: symcrypt_sys::SYMCRYPT_HMAC_SHA384_STATE,
-    expanded_key: Arc<HmacSha384ExpandedKey>,
+    expanded_key: Pin<Arc<HmacSha384ExpandedKey>>,
 }
 
 unsafe impl Send for HmacSha384Inner {
@@ -222,13 +234,12 @@ unsafe impl Sync for HmacSha384Inner {
 
 impl HmacSha384State {
     pub fn new(key: &[u8]) -> Result<Self, SymCryptError> {
-        let mut expanded_key = HmacSha384ExpandedKey(Pin::new(Box::new(
-            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default()),
-        ));
+        let mut expanded_key = Arc::new(HmacSha384ExpandedKey(
+            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default()));
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptHmacSha384ExpandKey(
-                &mut *expanded_key.0,
+                &mut (Arc::get_mut(&mut expanded_key).unwrap()).0, // Arc::get_mut() to unbind the Arc<>, &mut (T).0 to get raw pointer for SymCrypt
                 key.as_ptr(),
                 key.len() as symcrypt_sys::SIZE_T,
             ) {
@@ -236,12 +247,12 @@ impl HmacSha384State {
                     let mut instance = HmacSha384State {
                         inner: Box::pin(HmacSha384Inner {
                             state: symcrypt_sys::SYMCRYPT_HMAC_SHA384_STATE::default(),
-                            expanded_key: Arc::new(expanded_key),
+                            expanded_key: Pin::new(expanded_key),
                         }),
                     };
                     symcrypt_sys::SymCryptHmacSha384Init(
                         &mut instance.inner.state,
-                        &*instance.inner.expanded_key.0,
+                        &instance.inner.expanded_key.0,
                     );
                     Ok(instance)
                 }
@@ -275,21 +286,21 @@ impl HmacState for HmacSha384State {
     }
 } 
 
-/// Creates a copy of the current HmacSha384State. Clone will create a new state but will reference the same
-/// expanded_key of the current HmacSha384State; therefore increasing the refcount of the HmacSha384ExpandedKey struct.
+/// Creates a clone of the current HmacSha384State. Clone will create a new state field but will reference the same
+/// expanded_key of the current HmacSha384State; therefore increasing the refcount on expanded_key field.
 impl Clone for HmacSha384State {
     fn clone(&self) -> Self {
         let mut new_state = HmacSha384State {
             inner: Box::pin(HmacSha384Inner {
                 state: symcrypt_sys::SYMCRYPT_HMAC_SHA384_STATE::default(),
-                expanded_key: Arc::clone(&self.inner.expanded_key),
+                expanded_key: Pin::clone(&self.inner.expanded_key),
             }),
         };
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptHmacSha384StateCopy(
                 &self.inner.state,
-                &*self.inner.expanded_key.0,
+                &self.inner.expanded_key.0,
                 &mut new_state.inner.state,
             );
         }
@@ -317,15 +328,16 @@ pub fn hmac_sha384(
     let mut result = [0u8; SHA384_HMAC_RESULT_SIZE];
     unsafe {
         // SAFETY: FFI calls
-        let mut expanded_key = HmacSha384ExpandedKey(Pin::new(Box::new(symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default())));
-        match symcrypt_sys::SymCryptHmacSha384ExpandKey(
-            &mut *expanded_key.0,
+    let mut expanded_key = Arc::new(HmacSha384ExpandedKey(
+            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default()));
+            match symcrypt_sys::SymCryptHmacSha384ExpandKey(
+            &mut (Arc::get_mut(&mut expanded_key).unwrap()).0, // Arc::get_mut() to unbind the Arc<>, &mut (T).0 to get raw pointer for SymCrypt
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
         ) {
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                 symcrypt_sys::SymCryptHmacSha384(
-                    &mut *expanded_key.0,
+                    &mut (Arc::get_mut(&mut expanded_key).unwrap()).0,
                     data.as_ptr(),
                     data.len() as symcrypt_sys::SIZE_T,
                     result.as_mut_ptr(),
@@ -462,9 +474,8 @@ mod test {
         let p_key = hex::decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let data = hex::decode("").unwrap();
         let expected = "ad88735f29e167dabded11b57e168f0b773b2985f4c2d2234c8d7a6bf01e2a791590bc0165003f9a7e47c4c687622fd6";
-        let mut result: [u8; SHA384_HMAC_RESULT_SIZE] = [0; SHA384_HMAC_RESULT_SIZE];
 
-        result = hmac_sha384(&p_key, &data).unwrap();
+        let result = hmac_sha384(&p_key, &data).unwrap();
         assert_eq!(hex::encode(result), expected);
     }
 }
