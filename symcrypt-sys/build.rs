@@ -3,6 +3,7 @@ extern crate bindgen;
 use std::env;
 use std::path::PathBuf;
 
+/// SymCrypt must
 fn main() {
     #[cfg(target_os = "windows")]
     {
@@ -28,7 +29,7 @@ fn main() {
 
     // TODO: Factor out binding generation. Bindgen should only be run manually with updates to underlying SymCrypt code that
     // we decide what to take.
-    println!("cargo:rerun-if-changed=inc/wrapper.h");
+    println!("cargo:rerun-if-changed=/wrapper.h");
 
     // TODO: Discuss if factoring the .allowlist_functions to another file is better approach
 
@@ -69,7 +70,6 @@ fn main() {
         .allowlist_function("SymCryptSizeofEckeyFromCurve")
         // Utility functions
         .allowlist_function("SymCryptWipe")
-        
         .generate_comments(true)
         .derive_default(true)
         .generate()
