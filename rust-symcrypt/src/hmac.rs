@@ -167,17 +167,18 @@ pub fn hmac_sha256(
     let mut result = [0u8; SHA256_HMAC_RESULT_SIZE];
     unsafe {
         // SAFETY: FFI calls
-        let mut expanded_key = Arc::new(HmacSha256ExpandedKey(
-            symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default(),
-        ));
+        let mut expanded_key = HmacSha256ExpandedKey(
+            symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default(), // Arc not needed here since this key will not be shared
+
+        );
         match symcrypt_sys::SymCryptHmacSha256ExpandKey(
-            &mut (Arc::get_mut(&mut expanded_key).unwrap()).0, // Arc::get_mut() to unbind the Arc<>, &mut (T).0 to get raw pointer for SymCrypt
+            &mut expanded_key.0,
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
         ) {
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                 symcrypt_sys::SymCryptHmacSha256(
-                    &mut (Arc::get_mut(&mut expanded_key).unwrap()).0,
+                    &mut expanded_key.0,
                     data.as_ptr(),
                     data.len() as symcrypt_sys::SIZE_T,
                     result.as_mut_ptr(),
@@ -329,17 +330,17 @@ pub fn hmac_sha384(
     let mut result = [0u8; SHA384_HMAC_RESULT_SIZE];
     unsafe {
         // SAFETY: FFI calls
-        let mut expanded_key = Arc::new(HmacSha384ExpandedKey(
+        let mut expanded_key = HmacSha384ExpandedKey(
             symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default(),
-        ));
+        );
         match symcrypt_sys::SymCryptHmacSha384ExpandKey(
-            &mut (Arc::get_mut(&mut expanded_key).unwrap()).0, // Arc::get_mut() to unbind the Arc<>, &mut (T).0 to get raw pointer for SymCrypt
+            &mut expanded_key.0, // Arc not needed here since this key will not be shared
             key.as_ptr(),
             key.len() as symcrypt_sys::SIZE_T,
         ) {
             symcrypt_sys::SYMCRYPT_ERROR_SYMCRYPT_NO_ERROR => {
                 symcrypt_sys::SymCryptHmacSha384(
-                    &mut (Arc::get_mut(&mut expanded_key).unwrap()).0,
+                    &mut expanded_key.0,
                     data.as_ptr(),
                     data.len() as symcrypt_sys::SIZE_T,
                     result.as_mut_ptr(),
