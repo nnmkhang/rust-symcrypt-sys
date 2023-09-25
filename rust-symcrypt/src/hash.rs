@@ -221,7 +221,7 @@ mod test {
         assert_eq!(hex::encode(result), expected);
     }
 
-    fn test_generic_state_copy<H: HashState>(mut hash_state: H, data: &[u8])
+    fn test_generic_state_clone<H: HashState>(mut hash_state: H, data: &[u8])
     where
         H::Result: AsRef<[u8]>,
     {
@@ -282,15 +282,15 @@ mod test {
     }
 
     #[test]
-    fn test_state_sha256_copy() {
+    fn test_state_sha256_clone() {
         let data = hex::decode("641ec2cf711e").unwrap();
-        test_generic_state_copy(Sha256State::new(), &data);
+        test_generic_state_clone(Sha256State::new(), &data);
     }
 
     #[test]
-    fn test_state_sha384_copy() {
+    fn test_state_sha384_clone() {
         let data = hex::decode("f268267bfb73d5417ac2bc4a5c64").unwrap();
-        test_generic_state_copy(Sha384State::new(), &data);
+        test_generic_state_clone(Sha384State::new(), &data);
     }
 
     #[test]

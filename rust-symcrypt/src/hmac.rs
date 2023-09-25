@@ -43,7 +43,7 @@ impl Drop for HmacSha256ExpandedKey {
 
 /// Using an inner HmacSha256 state that is Pin<Box<>>'d since the memory address for Self is moved around when returning from HmacSha256State::new()
 ///
-/// expanded_key is Arc<>'d to be properly ref counted when calling HmacShaXXXState::copy().
+/// expanded_key is Arc<>'d to be properly ref counted when calling HmacShaXXXState::clone().
 ///
 /// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
 /// doing so would lead to use-after-free and inconsistent states.
@@ -199,7 +199,7 @@ impl Drop for HmacSha384ExpandedKey {
 
 /// Using an inner HmacSha384 state that is Pin<Box<>>'d since the memory address for Self is moved around when returning from HmacSha384State::new()
 ///
-/// expanded_key is Arc<>'d to be properly ref counted when calling HmacShaXXXState::copy().
+/// expanded_key is Arc<>'d to be properly ref counted when calling HmacShaXXXState::clone().
 ///
 /// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
 /// doing so would lead to use-after-free and inconsistent states.
@@ -350,7 +350,7 @@ mod test {
         assert_eq!(hex::encode(result), expected);
     }
 
-    fn test_generic_state_copy<H: HmacState>(mut hmac_state: H, data: &[u8])
+    fn test_generic_state_clone<H: HmacState>(mut hmac_state: H, data: &[u8])
     where
         H::Result: AsRef<[u8]>,
     {
@@ -387,12 +387,12 @@ mod test {
     }
 
     #[test]
-    pub fn test_hmac_sha256_state_copy() {
+    pub fn test_hmac_sha256_state_clone() {
         let p_key = hex::decode("0a71d5cf99849bc13d73832dcd864244").unwrap();
         let data = hex::decode("17f1ee0c6767a1f3f04bb3c1b7a4e0d4f0e59e5963c1a3bf1540a76b25136baef425faf488722e3e331c77d26fbbd8300df532498f50c5ecd243f481f09348f964ddb8056f6e2886bb5b2f453fcf1de5629f3d166324570bf849792d35e3f711b041b1a7e30494b5d1316484ed85b8da37094627a8e66003d079bfd8beaa80dc").unwrap();
 
         let hmac_state = HmacSha256State::new(&p_key).unwrap();
-        test_generic_state_copy(hmac_state, &data);
+        test_generic_state_clone(hmac_state, &data);
     }
 
     #[test]
@@ -432,13 +432,13 @@ mod test {
     }
 
     #[test]
-    pub fn test_hmac_sha384_state_copy() {
+    pub fn test_hmac_sha384_state_clone() {
         let p_key = hex::decode("ba139c3403432b6ee435d71fed08d6fa12aee12201f02d47b3b29d12417936c4")
             .unwrap();
         let data = hex::decode("beec952d19e8b3db3a4b7fdb4c1d2ea1c492741ea23ceb92f380b9a29b476eaa51f52b54eb9f096adc79b8e8fb8d675686b3e45466bd0577b4f246537dbeb3d9c2a709e4c383180e7ee86bc872e52baaa8ef4107f41ebbc5799a716b6b50e87c19e976042afca7702682e0a2398b42453430d15ed5c9d62448608212ed65d33a").unwrap();
 
         let hmac_state = HmacSha384State::new(&p_key).unwrap();
-        test_generic_state_copy(hmac_state, &data);
+        test_generic_state_clone(hmac_state, &data);
     }
 
     #[test]
