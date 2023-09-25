@@ -1,4 +1,4 @@
-/* Friendly rust types for CurveTypes. */
+//! Friendly rust types for CurveTypes.
 
 //use lazy_static::lazy_static;
 use crate::errors::SymCryptError;

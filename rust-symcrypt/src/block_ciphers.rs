@@ -1,4 +1,4 @@
-/* Friendly rust types for BlockCipherTypes. Currently the only supported BlockCipherType is Aes. */
+//! Friendly rust types for BlockCipherTypes. Currently the only supported BlockCipherType is Aes.
 
 use symcrypt_sys;
 
