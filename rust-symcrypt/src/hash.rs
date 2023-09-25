@@ -13,7 +13,7 @@ pub const SHA384_RESULT_SIZE: usize = symcrypt_sys::SYMCRYPT_SHA384_RESULT_SIZE 
 ///
 /// [`append()`] appends to be hashed data to the state, this operation can be done multiple times.
 ///
-/// [`result()`] returns the result of the hash. The state is re-initialized and ready for re-use; you do not have to call
+/// [`result()`] returns the result of the hash. The state is wiped and re-initialized and ready for re-use; you do not have to call
 /// SymCryptXXXInit on the state to start another fresh hash computation.
 pub trait HashState: Clone {
     type Result;
