@@ -3734,6 +3734,9 @@ extern "C" {
 extern "C" {
     pub fn SymCryptHkdfSelfTest();
 }
+extern "C" {
+    pub fn SymCryptRandom(pbRandom: PBYTE, cbRandom: SIZE_T);
+}
 pub const _SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_LSB_FIRST: _SYMCRYPT_NUMBER_FORMAT = 1;
 pub const _SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_MSB_FIRST: _SYMCRYPT_NUMBER_FORMAT = 2;
 pub type _SYMCRYPT_NUMBER_FORMAT = ::std::os::raw::c_int;

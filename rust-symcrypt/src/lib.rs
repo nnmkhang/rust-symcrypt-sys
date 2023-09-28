@@ -16,10 +16,19 @@ pub fn symcrypt_init() {
     }
 }
 
+/// Takes in a rand_length and returns a Vec<u8> with rand_length random bytes 
+pub fn symcrypt_random(rand_length: u64) -> Vec<u8> {
+    let mut random_buffer: Vec<u8> = vec![0; rand_length as usize];
+    unsafe { // SAFETY: FFI calls
+        symcrypt_sys::SymCryptRandom(random_buffer.as_mut_ptr(), rand_length);
+    }
+    random_buffer
+}
+
 pub mod block_ciphers;
 pub mod chacha;
 pub mod ecdh;
-pub mod ecurve;
+pub mod eckey;
 pub mod errors;
 pub mod gcm;
 pub mod hash;
