@@ -16,7 +16,7 @@ pub enum CurveType {
 /// EcKey must be allocated after [`EcCurve`] and free'd before EcCurve is free'd.
 /// This is enforced by having EcCurve be a field member of the EcKey, forcing the desired drop sequence.
 ///
-/// Allocation for EcKey is handled by SymCrypt via SymCryptEcKeyAllocate, and is subsequently stored on the stack, therefore pointer will 
+/// Allocation for EcKey is handled by SymCrypt via SymCryptEcKeyAllocate, and is subsequently stored on the stack, therefore pointer will
 /// not move and Box<> is not needed.
 pub struct EcKey {
     inner: symcrypt_sys::PSYMCRYPT_ECKEY,
@@ -91,7 +91,7 @@ impl EcCurve {
     pub(crate) fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         unsafe {
             // SAFETY: FFI calls
-            let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
+            let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0); // stack allocated since will do SymCryptEcCurveAllocate.
             if curve_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }

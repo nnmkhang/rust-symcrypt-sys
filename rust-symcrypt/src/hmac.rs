@@ -44,7 +44,7 @@ impl Drop for HmacSha256ExpandedKey {
 }
 
 /// Using an inner HmacSha256 state that is Pin<Box<>>'d. Memory allocation is not handled by SymCrypt and Self is moved
-/// around when returning from HmacSha256State::new(). Box<> heap allocates the memory and ensures that it does not move 
+/// around when returning from HmacSha256State::new(). Box<> heap allocates the memory and ensures that it does not move
 /// within its lifetime.
 ///
 /// expanded_key is Arc<>'d to be properly ref counted when calling HmacShaXXXState::clone().
@@ -208,9 +208,9 @@ impl Drop for HmacSha384ExpandedKey {
 }
 
 /// Using an inner HmacSha256 state that is Pin<Box<>>'d. Memory allocation is not handled by SymCrypt and Self is moved
-/// around when returning from HmacSha256State::new(). Box<> heap allocates the memory and ensures that it does not move 
+/// around when returning from HmacSha256State::new(). Box<> heap allocates the memory and ensures that it does not move
 /// within its lifetime.
-/// 
+///
 /// expanded_key is Arc<>'d to be properly ref counted when calling HmacShaXXXState::clone().
 ///
 /// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
