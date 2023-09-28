@@ -228,7 +228,6 @@ name = "rust-symcrypt"
 version = "0.1.0"
 dependencies = [
  "hex",
- "lazy_static",
  "libc",
  "symcrypt-sys",
 ]

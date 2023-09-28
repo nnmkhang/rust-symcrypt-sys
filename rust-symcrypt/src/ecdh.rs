@@ -5,7 +5,6 @@ use crate::errors::SymCryptError;
 use std::vec;
 use symcrypt_sys;
 
-
 /// Wrapper for the EcDh secret agreement result value. This is in place to make the return clear to the caller.
 #[derive(Debug)]
 pub struct EcDhSecretAgreement(Vec<u8>);
@@ -17,7 +16,7 @@ impl EcDhSecretAgreement {
 }
 
 /// EcDh struct holds the EcKey as well as the associated CurveType
-/// 
+///
 /// [`EcKey`] holds the public/private key pair that is associated with the provided CurveType.
 /// EcKey is owned by EcDh struct, and will drop when EcDh leaves scope.
 pub struct EcDh {
@@ -25,16 +24,16 @@ pub struct EcDh {
     key: EcKey,
 }
 
-/// Impl for EcDh struct. 
-/// The EcDh object is 
-/// 
+/// Impl for EcDh struct.
+/// The EcDh object is
+///
 /// [`new()`] takes in a curve and returns an EcDh struct who's EcKey has a private/public key pair assigned to it.
-/// 
+///
 /// ['from_public_key_bytes()'] takes in a public_key and creates a EcDh struct who's EcKey has only a public key attached.
-/// 
+///
 /// [`get_public_key_bytes()`] returns a Vec<u8> that is the public key associated with the current EcKey
 ///  
-/// [`ecdh_secret_agreement()`] takes in two EcDh structs and returns the associated secret agreement. 
+/// [`ecdh_secret_agreement()`] takes in two EcDh structs and returns the associated secret agreement.
 impl EcDh {
     pub fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         let ecdh_key = EcKey::new(curve)?;
@@ -101,7 +100,7 @@ impl EcDh {
 
             let mut pub_key_bytes = vec![0u8; pub_key_len as usize];
 
-            match symcrypt_sys::SymCryptEckeyGetValue( 
+            match symcrypt_sys::SymCryptEckeyGetValue(
                 self.key.inner(),
                 std::ptr::null_mut(), // setting private key to null since we will only access public key
                 0 as symcrypt_sys::SIZE_T,

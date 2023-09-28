@@ -1,8 +1,8 @@
 //! Friendly rust errors for SYMCRYPT_ERROR. For more info on SYMCRYPT_ERRORS please refer to symcrypt.h
 
 use std::convert::From;
-use symcrypt_sys;
 use std::fmt;
+use symcrypt_sys;
 
 #[non_exhaustive]
 #[derive(Debug, PartialEq)]

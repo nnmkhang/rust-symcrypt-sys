@@ -1,6 +1,6 @@
 //! Friendly rust types for CurveTypes.
 
-use lazy_static::lazy_static;
+//use lazy_static::lazy_static;
 use crate::errors::SymCryptError;
 use symcrypt_sys;
 
@@ -12,10 +12,12 @@ pub enum CurveType {
     Curve25519,
 }
 
-
 /// [`EcKey`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY, this is to let rust handle the drop and subsequent free.
 /// EcKey must be allocated after [`EcCurve`] and free'd before EcCurve is free'd.
 /// This is enforced by having EcCurve be a field member of the EcKey, forcing the desired drop sequence.
+///
+/// Allocation for EcKey is handled by SymCrypt via SymCryptEcKeyAllocate, and is subsequently stored on the stack, therefore pointer will 
+/// not move and Box<> is not needed.
 pub struct EcKey {
     inner: symcrypt_sys::PSYMCRYPT_ECKEY,
     curve: EcCurve,
@@ -25,34 +27,21 @@ pub struct EcKey {
 /// EcCurve must be allocated before [`EcKey`] is allocated, and dropped after EcKey is dropped.
 pub(crate) struct EcCurve(pub(crate) symcrypt_sys::PSYMCRYPT_ECURVE);
 
-
-unsafe impl Send for EcCurve {
-    // TODO: Figure out error :
-    // *const _SYMCRYPT_ECURVE_PARAMS cannot be shared between threads safely
-    // the trait Sync is not implemented for *const _SYMCRYPT_ECURVE_PARAMS
-}
-
-unsafe impl Sync for EcCurve {
-    // ??
-}
-
-
-
 /// Impl for [`EcKey`]
-/// 
+///
 /// [`new()`] returns a new EcKey object that has the key and curve allocated. This key must be allocated after the [`EcCurve`] has been allocated
 /// and dropped after [`EcCurve`] has been dropped.
-/// 
-/// [`inner()`] is an accessor to the inner field of the EcKey struct. Reference is not needed here since we are working with a raw SymCrypt pointer
-/// 
-/// [`curve()`] is an accessor to the curve field of the EcKey struct. Reference is used here since EcKey should still maintain ownership of the EcCurve 
+///
+/// [`inner()`] is an accessor to the inner field of the EcKey struct. Reference is not needed here since we are working with a raw SymCrypt pointer.
+///
+/// [`curve()`] is an accessor to the curve field of the EcKey struct. Reference is used here since EcKey should still maintain ownership of the EcCurve.
 impl EcKey {
     pub(crate) fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         let ecdh_curve = EcCurve::new(curve)?;
 
         unsafe {
             // SAFETY: FFI calls
-            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(ecdh_curve.0);
+            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(ecdh_curve.0); // stack allocated since will do SymCryptEckeyAllocate.
             if key_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
@@ -93,11 +82,10 @@ impl Drop for EcKey {
     }
 }
 
-
 /// Impl for EcCurve
-/// 
+///
 /// [`new()`] returns a [`EcCurve`] associated with the provided [`CurveType`].
-/// 
+///
 /// [`get_size`] returns the size of the [`EcCurve`] as a u32.
 impl EcCurve {
     pub(crate) fn new(curve: CurveType) -> Result<Self, SymCryptError> {
@@ -107,7 +95,7 @@ impl EcCurve {
             if curve_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
-            // curve needs to be wrapped to properly free the curve in the case there is an error in future initialization in EcDsa or EcDh
+            // curve needs to be wrapped to properly free the curve in the case there is an error in future initialization in EcDsa or EcDh.
             Ok(EcCurve(curve_ptr))
         }
     }
@@ -120,16 +108,15 @@ impl EcCurve {
     }
 }
 
-/// Must drop [`EcCurve`] after [`EcKey`] is dropped
+/// Must drop [`EcCurve`] after [`EcKey`] is dropped.
 impl Drop for EcCurve {
     fn drop(&mut self) {
-        unsafe { 
+        unsafe {
             // SAFETY: FFI calls
-            symcrypt_sys::SymCryptEcurveFree(self.0) 
+            symcrypt_sys::SymCryptEcurveFree(self.0)
         }
     }
 }
-
 
 /// convert_curve takes in the friendly CurveType enum and returns the symcrypt equivalent.
 pub(crate) fn convert_curve(curve: CurveType) -> symcrypt_sys::PCSYMCRYPT_ECURVE_PARAMS {
@@ -149,9 +136,7 @@ pub(crate) fn get_num_format(curve_type: CurveType) -> i32 {
     };
 }
 
-
 // TODO: implement lazy static for curve allocations.
-
 
 // lazy_static! {
 //     static ref NIST_P256_CURVE_PARAMS: symcrypt_sys::PCSYMCRYPT_ECURVE_PARAMS = {
