@@ -1,7 +1,7 @@
 //! Friendly rust types for CurveTypes.
 
-//use lazy_static::lazy_static;
-use crate::errors::SymCryptError;
+use lazy_static::lazy_static;
+use crate::{errors::SymCryptError, symcrypt_init};
 use symcrypt_sys;
 
 /// [`CurveType`] provides an enum of the curve types that can be used when creating an [`EcKey`].
@@ -14,13 +14,12 @@ pub enum CurveType {
 
 /// [`EcKey`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY, this is to let rust handle the drop and subsequent free.
 /// EcKey must be allocated after [`EcCurve`] and free'd before EcCurve is free'd.
-/// This is enforced by having EcCurve be a field member of the EcKey, forcing the desired drop sequence.
 ///
 /// Allocation for EcKey is handled by SymCrypt via SymCryptEcKeyAllocate, and is subsequently stored on the stack, therefore pointer will
 /// not move and Box<> is not needed.
 pub struct EcKey {
     inner: symcrypt_sys::PSYMCRYPT_ECKEY,
-    curve: EcCurve,
+    curve: &'static EcCurve,
 }
 
 /// [`EcCurve`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECURVE, this is to let rust handle the drop and subsequent free.
@@ -37,17 +36,17 @@ pub(crate) struct EcCurve(pub(crate) symcrypt_sys::PSYMCRYPT_ECURVE);
 /// [`curve()`] is an accessor to the curve field of the EcKey struct. Reference is used here since EcKey should still maintain ownership of the EcCurve.
 impl EcKey {
     pub(crate) fn new(curve: CurveType) -> Result<Self, SymCryptError> {
-        let ecdh_curve = EcCurve::new(curve)?;
+        let ec_curve = &EcCurve::new(curve)?;
 
         unsafe {
             // SAFETY: FFI calls
-            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(ecdh_curve.0); // stack allocated since will do SymCryptEckeyAllocate.
+            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(ec_curve.0); // stack allocated since will do SymCryptEckeyAllocate.
             if key_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
             let key = EcKey {
                 inner: key_ptr,
-                curve: ecdh_curve,
+                curve: ec_curve,
             };
             Ok(key)
         }
@@ -72,6 +71,16 @@ unsafe impl Sync for EcKey {
     // ??
 }
 
+unsafe impl Send for EcCurve {
+    // TODO: Figure out error :
+    // *const _SYMCRYPT_ECURVE_PARAMS cannot be shared between threads safely
+    // the trait Sync is not implemented for *const _SYMCRYPT_ECURVE_PARAMS
+}
+
+unsafe impl Sync for EcCurve {
+    // ??
+}
+
 /// Must drop the [`EcKey`] before the expanded [`EcCurve`] is dropped.
 impl Drop for EcKey {
     fn drop(&mut self) {
@@ -82,23 +91,43 @@ impl Drop for EcKey {
     }
 }
 
+// Curves can be re-used across EcDh calls, creating static references to save on allocations and increase perf.
+lazy_static! {
+    static ref NIST_P256: EcCurve = internal_new(CurveType::NistP256).unwrap();
+    static ref NIST_P384: EcCurve = internal_new(CurveType::NistP384).unwrap();
+    static ref CURVE_25519: EcCurve = internal_new(CurveType::Curve25519).unwrap();
+}
+
+// SymCryptInit must be called before any EcDh operations are performed. 
+fn internal_new(curve: CurveType) -> Result<EcCurve, SymCryptError> {
+    unsafe {
+        // SAFETY: FFI calls
+        symcrypt_init(); // Will only init once, subsequent calls to symcrypt_init() will be no-ops.
+        let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0); // stack allocated since will do SymCryptEcCurveAllocate.
+        if curve_ptr.is_null() {
+            return Err(SymCryptError::MemoryAllocationFailure);
+        }
+        // curve needs to be wrapped to properly free the curve in the case there is an error in future initialization in EcDsa or EcDh.
+        Ok(EcCurve(curve_ptr))
+    }
+}
+
 /// Impl for EcCurve
 ///
 /// [`new()`] returns a [`EcCurve`] associated with the provided [`CurveType`].
 ///
 /// [`get_size`] returns the size of the [`EcCurve`] as a u32.
 impl EcCurve {
-    pub(crate) fn new(curve: CurveType) -> Result<Self, SymCryptError> {
-        unsafe {
-            // SAFETY: FFI calls
-            let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0); // stack allocated since will do SymCryptEcCurveAllocate.
-            if curve_ptr.is_null() {
-                return Err(SymCryptError::MemoryAllocationFailure);
-            }
-            // curve needs to be wrapped to properly free the curve in the case there is an error in future initialization in EcDsa or EcDh.
-            Ok(EcCurve(curve_ptr))
-        }
+    pub(crate) fn new(curve: CurveType) -> Result<&'static Self, SymCryptError> {
+        let ec_curve: &'static EcCurve = match curve {
+            CurveType::NistP256 => &*NIST_P256,
+            CurveType::NistP384 => &*NIST_P384,
+            CurveType::Curve25519 => &*CURVE_25519,
+        };
+
+        Ok(ec_curve)
     }
+
     pub(crate) fn get_size(&self) -> u32 {
         unsafe {
             // SAFETY: FFI calls
@@ -135,22 +164,3 @@ pub(crate) fn get_num_format(curve_type: CurveType) -> i32 {
         return symcrypt_sys::_SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_MSB_FIRST;
     };
 }
-
-// TODO: implement lazy static for curve allocations.
-
-// lazy_static! {
-//     static ref NIST_P256_CURVE_PARAMS: symcrypt_sys::PCSYMCRYPT_ECURVE_PARAMS = {
-//         // SAFETY: FFI call, assuming SymCryptEcurveParamsNistP256 is a valid pointer
-//         unsafe { &symcrypt_sys::SymCryptEcurveParamsNistP256 }
-//     };
-
-//     static ref NIST_P384_CURVE_PARAMS: symcrypt_sys::PCSYMCRYPT_ECURVE_PARAMS = {
-//         // SAFETY: FFI call, assuming SymCryptEcurveParamsNistP384 is a valid pointer
-//         unsafe { &symcrypt_sys::SymCryptEcurveParamsNistP384 }
-//     };
-
-//     static ref CURVE_25519_PARAMS: symcrypt_sys::PCSYMCRYPT_ECURVE_PARAMS = {
-//         // SAFETY: FFI call, assuming SymCryptEcurveParamsCurve25519 is a valid pointer
-//         unsafe { &symcrypt_sys::SymCryptEcurveParamsCurve25519 }
-//     };
-// }
