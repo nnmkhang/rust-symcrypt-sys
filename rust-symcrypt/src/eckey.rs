@@ -36,7 +36,7 @@ pub(crate) struct EcCurve(pub(crate) symcrypt_sys::PSYMCRYPT_ECURVE);
 /// [`curve()`] is an accessor to the curve field of the EcKey struct. Reference is used here since EcKey should still maintain ownership of the EcCurve.
 impl EcKey {
     pub(crate) fn new(curve: CurveType) -> Result<Self, SymCryptError> {
-        let ec_curve = &EcCurve::new(curve)?;
+        let ec_curve = &EcCurve::new(curve);
 
         unsafe {
             // SAFETY: FFI calls
@@ -91,7 +91,7 @@ impl Drop for EcKey {
     }
 }
 
-// Curves can be re-used across EcDh calls, creating static references to save on allocations and increase perf.
+// Curves can be re-used across EcKey calls, creating static references to save on allocations and increase perf.
 // unwraps used here since only way this could fail is via not enough memory. 
 lazy_static! {
     static ref NIST_P256: EcCurve = internal_new(CurveType::NistP256).unwrap();
@@ -119,14 +119,14 @@ fn internal_new(curve: CurveType) -> Result<EcCurve, SymCryptError> {
 ///
 /// [`get_size`] returns the size of the [`EcCurve`] as a u32.
 impl EcCurve {
-    pub(crate) fn new(curve: CurveType) -> Result<&'static Self, SymCryptError> {
+    pub(crate) fn new(curve: CurveType) -> &'static Self {
         let ec_curve: &'static EcCurve = match curve {
             CurveType::NistP256 => &*NIST_P256,
             CurveType::NistP384 => &*NIST_P384,
             CurveType::Curve25519 => &*CURVE_25519,
         };
 
-        Ok(ec_curve)
+        ec_curve
     }
 
     pub(crate) fn get_size(&self) -> u32 {

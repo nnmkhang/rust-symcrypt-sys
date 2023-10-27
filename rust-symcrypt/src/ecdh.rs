@@ -144,13 +144,11 @@ impl EcDh {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::symcrypt_init;
 
     /// symcrypt_sys::SymCryptModuleInit() must be called via lib.rs in order to initialize the callbacks for
     /// SymCryptEcurveAllocate, SymCryptEckeyAllocate, SymCryptCallbackAlloc, etc.
     #[test]
     fn test_ecdh_nist_p256() {
-        symcrypt_init(); // must run symcrypt_init for the alloc callbacks to initialize
         let ecdh_1_private = EcDh::new(CurveType::NistP256).unwrap();
         let ecdh_2_private = EcDh::new(CurveType::NistP256).unwrap();
 
@@ -172,7 +170,6 @@ mod test {
 
     #[test]
     fn test_ecdh_nist_p384() {
-        symcrypt_init(); // must run symcrypt_init for the alloc callbacks to initialize
         let ecdh_1_private = EcDh::new(CurveType::NistP384).unwrap();
         let ecdh_2_private = EcDh::new(CurveType::NistP384).unwrap();
 
@@ -194,7 +191,6 @@ mod test {
 
     #[test]
     fn test_ecdh_curve_25519() {
-        symcrypt_init(); // must run symcrypt_init for the alloc callbacks to initialize
         let ecdh_1_private = EcDh::new(CurveType::Curve25519).unwrap();
         let ecdh_2_private = EcDh::new(CurveType::Curve25519).unwrap();
 
@@ -216,7 +212,6 @@ mod test {
 
     #[test]
     fn test_ecdh_failure() {
-        symcrypt_init(); // must run symcrypt_init for the alloc callbacks to initialize
         let ecdh_1_private = EcDh::new(CurveType::NistP384).unwrap();
         let ecdh_2_private = EcDh::new(CurveType::NistP256).unwrap();
 
