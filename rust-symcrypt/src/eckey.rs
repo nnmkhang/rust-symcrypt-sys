@@ -92,6 +92,7 @@ impl Drop for EcKey {
 }
 
 // Curves can be re-used across EcDh calls, creating static references to save on allocations and increase perf.
+// unwraps used here since only way this could fail is via not enough memory. 
 lazy_static! {
     static ref NIST_P256: EcCurve = internal_new(CurveType::NistP256).unwrap();
     static ref NIST_P384: EcCurve = internal_new(CurveType::NistP384).unwrap();
