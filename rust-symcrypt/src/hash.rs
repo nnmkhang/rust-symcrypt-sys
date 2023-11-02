@@ -27,23 +27,15 @@ pub trait HashState: Clone {
 ///
 /// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
 /// doing so would lead to use-after-free and inconsistent states.
-pub struct Sha256State {
-    state: Pin<Box<Sha256InnerState>>,
-}
-
-struct Sha256InnerState(symcrypt_sys::SYMCRYPT_SHA256_STATE);
+pub struct Sha256State(Pin<Box<symcrypt_sys::SYMCRYPT_SHA256_STATE>>);
 
 /// Creates a new instance of Sha256State, this must be called before other HashState functions can be called
 impl Sha256State {
     pub fn new() -> Self {
-        let mut instance = Sha256State {
-            state: Box::pin(Sha256InnerState(
-                symcrypt_sys::SYMCRYPT_SHA256_STATE::default(),
-            )),
-        };
+        let mut instance = Sha256State(Box::pin(symcrypt_sys::SYMCRYPT_SHA256_STATE::default()));
         unsafe {
             // SAFETY: FFI calls
-            symcrypt_sys::SymCryptSha256Init(&mut instance.state.0);
+            symcrypt_sys::SymCryptSha256Init(&mut *instance.0);
         }
         instance
     }
@@ -56,7 +48,7 @@ impl HashState for Sha256State {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptSha256Append(
-                &mut self.state.0,
+                &mut *self.0,
                 data.as_ptr(),
                 data.len() as symcrypt_sys::SIZE_T,
             );
@@ -67,7 +59,7 @@ impl HashState for Sha256State {
         let mut result = [0u8; SHA256_RESULT_SIZE];
         unsafe {
             // SAFETY: FFI calls
-            symcrypt_sys::SymCryptSha256Result(&mut self.state.0, result.as_mut_ptr());
+            symcrypt_sys::SymCryptSha256Result(&mut *self.0, result.as_mut_ptr());
         }
         result
     }
@@ -76,14 +68,10 @@ impl HashState for Sha256State {
 /// Clone creates a new copy of the current Sha256State.
 impl Clone for Sha256State {
     fn clone(&self) -> Self {
-        let mut new_state = Sha256State {
-            state: Box::pin(Sha256InnerState(
-                symcrypt_sys::SYMCRYPT_SHA256_STATE::default(),
-            )),
-        };
+        let mut new_state = Sha256State (Box::pin(symcrypt_sys::SYMCRYPT_SHA256_STATE::default()));
         unsafe {
             // SAFETY: FFI calls
-            symcrypt_sys::SymCryptSha256StateCopy(&self.state.0, &mut new_state.state.0);
+            symcrypt_sys::SymCryptSha256StateCopy(&*self.0, &mut *new_state.0);
         }
         new_state
     }
@@ -94,8 +82,8 @@ impl Drop for Sha256State {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptWipe(
-                ptr::addr_of_mut!(self.state) as *mut c_void,
-                mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T,
+                ptr::addr_of_mut!(self.0) as *mut c_void,
+                mem::size_of_val(&mut self.0) as symcrypt_sys::SIZE_T,
             )
         }
     }
@@ -120,23 +108,15 @@ pub fn sha256(data: &[u8]) -> [u8; SHA256_RESULT_SIZE] {
 ///
 /// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
 /// doing so would lead to use-after-free and inconsistent states.
-struct Sha384InnerState(symcrypt_sys::SYMCRYPT_SHA384_STATE);
-
-pub struct Sha384State {
-    state: Pin<Box<Sha384InnerState>>,
-}
+pub struct Sha384State(Pin<Box<symcrypt_sys::SYMCRYPT_SHA384_STATE>>);
 
 /// Creates a new instance of Sha384State, this must be called before other HashState functions can be called
 impl Sha384State {
     pub fn new() -> Self {
-        let mut instance = Sha384State {
-            state: Box::pin(Sha384InnerState(
-                symcrypt_sys::SYMCRYPT_SHA384_STATE::default(),
-            )),
-        };
+        let mut instance = Sha384State(Box::pin(symcrypt_sys::SYMCRYPT_SHA384_STATE::default()));
         unsafe {
             // SAFETY: FFI calls
-            symcrypt_sys::SymCryptSha384Init(&mut instance.state.0);
+            symcrypt_sys::SymCryptSha384Init(&mut *instance.0);
         }
         instance
     }
@@ -149,7 +129,7 @@ impl HashState for Sha384State {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptSha384Append(
-                &mut self.state.0,
+                &mut *self.0,
                 data.as_ptr(),
                 data.len() as symcrypt_sys::SIZE_T,
             );
@@ -160,7 +140,7 @@ impl HashState for Sha384State {
         let mut result = [0u8; SHA384_RESULT_SIZE];
         unsafe {
             // SAFETY: FFI calls
-            symcrypt_sys::SymCryptSha384Result(&mut self.state.0, result.as_mut_ptr());
+            symcrypt_sys::SymCryptSha384Result(&mut *self.0, result.as_mut_ptr());
         }
         result
     }
@@ -169,14 +149,10 @@ impl HashState for Sha384State {
 /// Clone creates a new copy of the current Sha384State.
 impl Clone for Sha384State {
     fn clone(&self) -> Self {
-        let mut new_state = Sha384State {
-            state: Box::pin(Sha384InnerState(
-                symcrypt_sys::SYMCRYPT_SHA384_STATE::default(),
-            )),
-        };
+        let mut new_state = Sha384State(Box::pin(symcrypt_sys::SYMCRYPT_SHA384_STATE::default()));
         unsafe {
             // SAFETY: FFI calls
-            symcrypt_sys::SymCryptSha384StateCopy(&self.state.0, &mut new_state.state.0);
+            symcrypt_sys::SymCryptSha384StateCopy(&*self.0, &mut *new_state.0);
         }
         new_state
     }
@@ -187,8 +163,8 @@ impl Drop for Sha384State {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptWipe(
-                ptr::addr_of_mut!(self.state) as *mut c_void,
-                mem::size_of_val(&mut self.state) as symcrypt_sys::SIZE_T,
+                ptr::addr_of_mut!(self.0) as *mut c_void,
+                mem::size_of_val(&mut self.0) as symcrypt_sys::SIZE_T,
             )
         }
     }
