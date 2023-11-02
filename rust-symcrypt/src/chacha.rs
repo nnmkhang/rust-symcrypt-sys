@@ -3,24 +3,24 @@
 use crate::errors::SymCryptError;
 use symcrypt_sys;
 
-/// Stateless call to encrypt using ChaChaPoly1305. 
-/// 
+/// Stateless call to encrypt using ChaChaPoly1305.
+///
 /// [`key`] must be 32 bytes
 /// [`nonce`] must be 12 bytes
-/// [`auth_data`] is an optional parameter that can be provided, if you do not wish to provide auth data just 
-/// input an empty array. 
+/// [`auth_data`] is an optional parameter that can be provided, if you do not wish to provide auth data just
+/// input an empty array.
 /// [`buffer`] is an in/out parameter that contains the plain text data to be encrypted. after the encryption is complete, the
 /// resulting cipher text will be written to the [`buffer`] parameter.
 /// [`tag`] must be 16 bytes and is an in/out parameter that the tag result will be written to.
-/// 
+///
 /// There is no return value since [`buffer`] will be modified in place, if this function fails a SymCrypt error will be returned.
 /// If the function succeeds nothing will be returned and the [`buffer`] and [`tag`] parameters will be modified in place.  
-/// 
+///
 /// There is no return value since the input [`dst`] buffer will be modified in place, if this function fails
-/// a SymCrypt error will be returned, if the function succeeds nothing will be returned and the [`dst`] and [`tag`] will be 
+/// a SymCrypt error will be returned, if the function succeeds nothing will be returned and the [`dst`] and [`tag`] will be
 /// modified in place.  
-/// 
-/// You must check if this function fails before using the values stored in the in/out parameters. 
+///
+/// You must check if this function fails before using the values stored in the in/out parameters.
 pub fn chacha20_poly1305_encrypt(
     key: &[u8; 32],   // ChaCha key length must be 32 bytes
     nonce: &[u8; 12], // ChaCha nonce length must be 12 bytes
@@ -49,25 +49,25 @@ pub fn chacha20_poly1305_encrypt(
     }
 }
 
-/// Stateless call to decrypt using ChaChaPoly1305. 
-/// 
+/// Stateless call to decrypt using ChaChaPoly1305.
+///
 /// [`key`] must be 32 bytes
 /// [`nonce`] must be 12 bytes
-/// [`auth_data`] is an optional parameter that can be provided, if you do not wish to provide auth data just 
-/// input an empty array. 
+/// [`auth_data`] is an optional parameter that can be provided, if you do not wish to provide auth data just
+/// input an empty array.
 /// [`buffer`] is an in/out parameter that contains the cipher text data to be decrypted. after the decryption is complete, the
 /// resulting plain text will be written to the [`buffer`] parameter
 /// [`tag`] must be 16 bytes and will be used to check if the decryption is successful.
-/// 
+///
 /// There is no return value since [`buffer`] will be modified in place, if this function fails a SymCrypt error will be returned.
 /// If the function succeeds nothing will be returned and [`buffer`] will be modified in place.  
-/// 
-/// You must check if this function fails before using the values stored in the in/out parameters. 
+///
+/// You must check if this function fails before using the values stored in the in/out parameters.
 pub fn chacha20_poly1305_decrypt(
     key: &[u8; 32],   // ChaCha key length must be 32 bytes
     nonce: &[u8; 12], // ChaCha nonce length must be 12 bytes
     auth_data: &[u8],
-    buffer: &mut [u8], 
+    buffer: &mut [u8],
     tag: &[u8; 16], // ChaCha tag must be 16 bytes
 ) -> Result<(), SymCryptError> {
     unsafe {
@@ -112,12 +112,13 @@ mod test {
 
         let mut buffer = [0u8; 114];
         hex::decode_to_slice("4c616469657320616e642047656e746c656d656e206f662074686520636c617373206f66202739393a204966204920636f756c64206f6666657220796f75206f6e6c79206f6e652074697020666f7220746865206675747572652c2073756e73637265656e20776f756c642062652069742e", &mut buffer).unwrap();
-        
+
         let expected_cipher = "d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116";
         let expected_tag = "1ae10b594f09e26a7e902ecbd0600691";
 
         let mut tag = [0u8; 16];
-        chacha20_poly1305_encrypt(&key_array, &nonce_array, &auth_data, &mut buffer, &mut tag).unwrap();
+        chacha20_poly1305_encrypt(&key_array, &nonce_array, &auth_data, &mut buffer, &mut tag)
+            .unwrap();
 
         assert_eq!(hex::encode(buffer), expected_cipher);
         assert_eq!(hex::encode(tag), expected_tag);
@@ -137,7 +138,7 @@ mod test {
 
         let mut buffer = [0u8; 114];
         hex::decode_to_slice("4c616469657320616e642047656e746c656d656e206f662074686520636c617373206f66202739393a204966204920636f756c64206f6666657220796f75206f6e6c79206f6e652074697020666f7220746865206675747572652c2073756e73637265656e20776f756c642062652069742e", &mut buffer).unwrap();
-        
+
         let expected_cipher = "d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116";
 
         let mut tag = [0u8; 16];
@@ -162,17 +163,23 @@ mod test {
 
         let mut buffer = [0u8; 114];
         hex::decode_to_slice("d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116", &mut buffer).unwrap();
-        
+
         let dst = "4c616469657320616e642047656e746c656d656e206f662074686520636c617373206f66202739393a204966204920636f756c64206f6666657220796f75206f6e6c79206f6e652074697020666f7220746865206675747572652c2073756e73637265656e20776f756c642062652069742e";
 
         let mut tag_array = [0u8; 16];
         hex::decode_to_slice("1ae10b594f09e26a7e902ecbd0600691", &mut tag_array).unwrap();
 
-        chacha20_poly1305_decrypt(&key_array, &nonce_array, &auth_data, &mut buffer, &tag_array).unwrap();
+        chacha20_poly1305_decrypt(
+            &key_array,
+            &nonce_array,
+            &auth_data,
+            &mut buffer,
+            &tag_array,
+        )
+        .unwrap();
 
         assert_eq!(hex::encode(buffer), dst);
     }
-
 
     #[test]
     fn test_chacha_decrypt_failure() {
@@ -190,11 +197,17 @@ mod test {
 
         let mut buffer = [0u8; 114];
         hex::decode_to_slice("d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116", &mut buffer).unwrap();
-        
+
         let mut tag_array = [0u8; 16];
         hex::decode_to_slice("1ae10b594f09e26a7e902ecbd0600691", &mut tag_array).unwrap();
 
-        let result = chacha20_poly1305_decrypt(&key_array, &nonce_array, &auth_data, &mut buffer, &tag_array);
+        let result = chacha20_poly1305_decrypt(
+            &key_array,
+            &nonce_array,
+            &auth_data,
+            &mut buffer,
+            &tag_array,
+        );
 
         assert_eq!(result.unwrap_err(), SymCryptError::AuthenticationFailure);
     }

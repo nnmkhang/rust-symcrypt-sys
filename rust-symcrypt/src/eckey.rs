@@ -1,7 +1,7 @@
 //! Friendly rust types for CurveTypes.
 
-use lazy_static::lazy_static;
 use crate::{errors::SymCryptError, symcrypt_init};
+use lazy_static::lazy_static;
 use symcrypt_sys;
 
 /// [`CurveType`] provides an enum of the curve types that can be used when creating an [`EcKey`].
@@ -92,14 +92,14 @@ impl Drop for EcKey {
 }
 
 // Curves can be re-used across EcKey calls, creating static references to save on allocations and increase perf.
-// unwraps used here since only way this could fail is via not enough memory. 
+// unwraps used here since only way this could fail is via not enough memory.
 lazy_static! {
     static ref NIST_P256: EcCurve = internal_new(CurveType::NistP256).unwrap();
     static ref NIST_P384: EcCurve = internal_new(CurveType::NistP384).unwrap();
     static ref CURVE_25519: EcCurve = internal_new(CurveType::Curve25519).unwrap();
 }
 
-// SymCryptInit must be called before any EcDh operations are performed. 
+// SymCryptInit must be called before any EcDh operations are performed.
 fn internal_new(curve: CurveType) -> Result<EcCurve, SymCryptError> {
     unsafe {
         // SAFETY: FFI calls
