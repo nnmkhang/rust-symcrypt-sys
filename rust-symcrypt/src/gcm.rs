@@ -19,20 +19,17 @@ pub struct GcmExpandedKey(Pin<Box<symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY>>);
 /// This function can fail and will propagate the error back to the caller.
 /// The only accepted Cipher for GCM is [`BlockCipherType::AesBlock`]
 /// 
-/// [`encrypt`]` and [`decrypt`] take in an allocated buffer as an out parameter for performance reasons. This is for scenarios
+/// [`encrypt_in_place`]` and [`decrypt_in_place`] take in an allocated buffer as an out parameter for performance reasons. This is for scenarios
 /// such as encrypting over a stream of data; allocating and copying data from a return will be costly performance wise.
 /// 
-/// [`encrypt`] takes in a [`buffer`] that has the plain text data to be encrypted. After the encryption has been completed,
-/// the [`buffer`] will be over-written to contain the cipher text data. [`encrypt`] will also take in [`tag`] which is 
+/// [`encrypt_in_place`] takes in a [`buffer`] that has the plain text data to be encrypted. After the encryption has been completed,
+/// the [`buffer`] will be over-written to contain the cipher text data. [`encrypt_in_place`] will also take in [`tag`] which is 
 /// a mutable buffer where the resulting tag will be written to. 
 /// 
-/// [`decrypt`] takes in a [`buffer`] that has the cipher text to be decrypted. After the decryption has been completed,
+/// [`decrypt_in_place`] takes in a [`buffer`] that has the cipher text to be decrypted. After the decryption has been completed,
 /// the [`buffer`] will be over-written to contain the plain text data. [`decrypt`] will also take in a [`tag`] which will 
-/// verify the cipher text has not been tampered with. [`decrypt`] can fail and you must check the result before using the 
+/// verify the cipher text has not been tampered with. [`decrypt_in_place`] can fail and you must check the result before using the 
 /// value stored in [`buffer`]. 
-/// 
-
-///
 impl GcmExpandedKey {
     pub fn new(key: &[u8], cipher: BlockCipherType) -> Result<Self, SymCryptError> {
         let mut expanded_key = Box::pin(symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default()); // boxing here so that the memory is not moved
@@ -41,8 +38,8 @@ impl GcmExpandedKey {
         Ok(gcm_expanded_key)
     }
 
-    pub fn encrypt(
-        &mut self,
+    pub fn encrypt_in_place(
+        &self,
         nonce: &[u8; 12],
         auth_data: &[u8],
         buffer: &mut [u8],
@@ -51,7 +48,7 @@ impl GcmExpandedKey {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmEncrypt(
-                &mut *self.0,
+                &*self.0,
                 nonce.as_ptr(),
                 nonce.len() as symcrypt_sys::SIZE_T,
                 auth_data.as_ptr(),
@@ -65,17 +62,17 @@ impl GcmExpandedKey {
         }
     }
 
-    pub fn decrypt(
-        &mut self,
+    pub fn decrypt_in_place(
+        &self,
         nonce: &[u8; 12],
         auth_data: &[u8],
         buffer: &mut [u8],
-        tag: &mut [u8],
+        tag: &[u8],
     ) -> Result<(), SymCryptError> {
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptGcmDecrypt(
-                &mut *self.0,
+                &*self.0,
                 nonce.as_ptr(),
                 nonce.len() as symcrypt_sys::SIZE_T,
                 auth_data.as_ptr(),
@@ -91,7 +88,20 @@ impl GcmExpandedKey {
             }
         }
     }
+
+    pub fn key_len(&self) -> usize {
+        self.0.cbKey as usize
+    }
 }
+
+unsafe impl Send for GcmExpandedKey {
+
+}
+
+unsafe impl Sync for GcmExpandedKey {
+    
+}
+
 
 /// Internal function to expand the SymCrypt Gcm Key.
 fn gcm_expand_key(
@@ -181,8 +191,8 @@ mod test {
         let expected_tag = "5bc94fbc3221a5db94fae95ae7121a47";
         let cipher = BlockCipherType::AesBlock;
 
-        let mut gcm_state = GcmExpandedKey::new(&p_key, cipher).unwrap();
-        gcm_state.encrypt(&nonce_array, &auth_data, &mut buffer, &mut tag);
+        let gcm_state = GcmExpandedKey::new(&p_key, cipher).unwrap();
+        gcm_state.encrypt_in_place(&nonce_array, &auth_data, &mut buffer, &mut tag);
 
         assert_eq!(hex::encode(buffer), expected_result);
         assert_eq!(hex::encode(tag), expected_tag);
@@ -203,9 +213,9 @@ mod test {
         hex::decode_to_slice("42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091", &mut buffer).unwrap();
         let cipher = BlockCipherType::AesBlock;
 
-        let mut gcm_state = GcmExpandedKey::new(&p_key, cipher).unwrap();
+        let gcm_state = GcmExpandedKey::new(&p_key, cipher).unwrap();
         gcm_state
-            .decrypt(&nonce_array, &auth_data, &mut buffer, &mut tag)
+            .decrypt_in_place(&nonce_array, &auth_data, &mut buffer, &mut tag)
             .unwrap();
         assert_eq!(hex::encode(buffer), expected_result);
     }
@@ -224,8 +234,8 @@ mod test {
         hex::decode_to_slice("42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091", &mut buffer).unwrap();
         let cipher = BlockCipherType::AesBlock;
 
-        let mut gcm_state = GcmExpandedKey::new(&p_key, cipher).unwrap();
-        let result = gcm_state.decrypt(&nonce_array, &auth_data, &mut buffer, &mut tag);
+        let gcm_state = GcmExpandedKey::new(&p_key, cipher).unwrap();
+        let result = gcm_state.decrypt_in_place(&nonce_array, &auth_data, &mut buffer, &mut tag);
 
         match result {
             Ok(_) => {

@@ -21,7 +21,7 @@ use symcrypt_sys;
 /// modified in place.  
 ///
 /// You must check if this function fails before using the values stored in the in/out parameters.
-pub fn chacha20_poly1305_encrypt(
+pub fn chacha20_poly1305_encrypt_in_place(
     key: &[u8; 32],   // ChaCha key length must be 32 bytes
     nonce: &[u8; 12], // ChaCha nonce length must be 12 bytes
     auth_data: &[u8],
@@ -63,7 +63,7 @@ pub fn chacha20_poly1305_encrypt(
 /// If the function succeeds nothing will be returned and [`buffer`] will be modified in place.  
 ///
 /// You must check if this function fails before using the values stored in the in/out parameters.
-pub fn chacha20_poly1305_decrypt(
+pub fn chacha20_poly1305_decrypt_in_place(
     key: &[u8; 32],   // ChaCha key length must be 32 bytes
     nonce: &[u8; 12], // ChaCha nonce length must be 12 bytes
     auth_data: &[u8],
@@ -117,7 +117,7 @@ mod test {
         let expected_tag = "1ae10b594f09e26a7e902ecbd0600691";
 
         let mut tag = [0u8; 16];
-        chacha20_poly1305_encrypt(&key_array, &nonce_array, &auth_data, &mut buffer, &mut tag)
+        chacha20_poly1305_encrypt_in_place(&key_array, &nonce_array, &auth_data, &mut buffer, &mut tag)
             .unwrap();
 
         assert_eq!(hex::encode(buffer), expected_cipher);
@@ -142,7 +142,7 @@ mod test {
         let expected_cipher = "d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116";
 
         let mut tag = [0u8; 16];
-        chacha20_poly1305_encrypt(&key_array, &nonce_array, &[], &mut buffer, &mut tag).unwrap();
+        chacha20_poly1305_encrypt_in_place(&key_array, &nonce_array, &[], &mut buffer, &mut tag).unwrap();
 
         assert_eq!(hex::encode(buffer), expected_cipher);
     }
@@ -169,7 +169,7 @@ mod test {
         let mut tag_array = [0u8; 16];
         hex::decode_to_slice("1ae10b594f09e26a7e902ecbd0600691", &mut tag_array).unwrap();
 
-        chacha20_poly1305_decrypt(
+        chacha20_poly1305_decrypt_in_place(
             &key_array,
             &nonce_array,
             &auth_data,
@@ -201,7 +201,7 @@ mod test {
         let mut tag_array = [0u8; 16];
         hex::decode_to_slice("1ae10b594f09e26a7e902ecbd0600691", &mut tag_array).unwrap();
 
-        let result = chacha20_poly1305_decrypt(
+        let result = chacha20_poly1305_decrypt_in_place(
             &key_array,
             &nonce_array,
             &auth_data,

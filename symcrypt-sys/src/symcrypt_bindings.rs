@@ -1778,6 +1778,16 @@ pub struct _SYMCRYPT_BLOCKCIPHER {
     pub blockSize: SIZE_T,
     pub expandedKeySize: SIZE_T,
 }
+
+unsafe impl Send for _SYMCRYPT_BLOCKCIPHER {
+
+}
+
+unsafe impl Sync for _SYMCRYPT_BLOCKCIPHER {
+    
+}
+
+
 #[test]
 fn bindgen_test_layout__SYMCRYPT_BLOCKCIPHER() {
     const UNINIT: ::std::mem::MaybeUninit<_SYMCRYPT_BLOCKCIPHER> =
