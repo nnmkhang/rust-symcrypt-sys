@@ -69,6 +69,7 @@ fn main() {
         .allowlist_function("SymCryptSizeofEckeyFromCurve")
         // Utility functions
         .allowlist_function("SymCryptWipe")
+        .allowlist_function("SymCryptRandom")
         
         .generate_comments(true)
         .derive_default(true)

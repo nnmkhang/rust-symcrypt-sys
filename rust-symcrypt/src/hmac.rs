@@ -43,7 +43,9 @@ impl Drop for HmacSha256ExpandedKey {
     }
 }
 
-/// Using an inner HmacSha256 state that is Pin<Box<>>'d since the memory address for Self is moved around when returning from HmacSha256State::new()
+/// Using an inner HmacSha256 state that is Pin<Box<>>'d. Memory allocation is not handled by SymCrypt and Self is moved
+/// around when returning from HmacSha256State::new(). Box<> heap allocates the memory and ensures that it does not move
+/// within its lifetime.
 ///
 /// expanded_key is Arc<>'d to be properly ref counted when calling HmacShaXXXState::clone().
 ///
@@ -169,7 +171,6 @@ pub fn hmac_sha256(
         // SAFETY: FFI calls
         let mut expanded_key = HmacSha256ExpandedKey(
             symcrypt_sys::SYMCRYPT_HMAC_SHA256_EXPANDED_KEY::default(), // Arc not needed here since this key will not be shared
-
         );
         match symcrypt_sys::SymCryptHmacSha256ExpandKey(
             &mut expanded_key.0,
@@ -206,7 +207,9 @@ impl Drop for HmacSha384ExpandedKey {
     }
 }
 
-/// Using an inner HmacSha384 state that is Pin<Box<>>'d since the memory address for Self is moved around when returning from HmacSha384State::new()
+/// Using an inner HmacSha256 state that is Pin<Box<>>'d. Memory allocation is not handled by SymCrypt and Self is moved
+/// around when returning from HmacSha256State::new(). Box<> heap allocates the memory and ensures that it does not move
+/// within its lifetime.
 ///
 /// expanded_key is Arc<>'d to be properly ref counted when calling HmacShaXXXState::clone().
 ///
@@ -330,9 +333,8 @@ pub fn hmac_sha384(
     let mut result = [0u8; SHA384_HMAC_RESULT_SIZE];
     unsafe {
         // SAFETY: FFI calls
-        let mut expanded_key = HmacSha384ExpandedKey(
-            symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default(),
-        );
+        let mut expanded_key =
+            HmacSha384ExpandedKey(symcrypt_sys::SYMCRYPT_HMAC_SHA384_EXPANDED_KEY::default());
         match symcrypt_sys::SymCryptHmacSha384ExpandKey(
             &mut expanded_key.0, // Arc not needed here since this key will not be shared
             key.as_ptr(),

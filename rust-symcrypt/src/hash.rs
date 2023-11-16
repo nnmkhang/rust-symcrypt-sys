@@ -22,8 +22,8 @@ pub trait HashState: Clone {
     fn result(&mut self) -> Self::Result;
 }
 
-/// Sha256State needs to have a heap allocated inner state that is Pin<Box<T>> since the memory address of Self is moved around when implementing
-/// HashState Result field.
+/// Sha256State needs to have a heap allocated inner state that is Pin<Box<>>'d. Memory allocation is not handled by SymCrypt and Self is moved
+/// around when returning from Sha256State::new(). Box<> heap allocates the memory and ensures that it does not move
 ///
 /// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
 /// doing so would lead to use-after-free and inconsistent states.
@@ -103,8 +103,8 @@ pub fn sha256(data: &[u8]) -> [u8; SHA256_RESULT_SIZE] {
     result
 }
 
-/// Sha384State needs to have a heap allocated inner state that is Pin<Box<T>> since the memory address of Self is moved around when implementing
-/// HashState Result field.
+/// Sha384State needs to have a heap allocated inner state that is Pin<Box<>>'d. Memory allocation is not handled by SymCrypt and Self is moved
+/// around when returning from Sha256State::new(). Box<> heap allocates the memory and ensures that it does not move
 ///
 /// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
 /// doing so would lead to use-after-free and inconsistent states.

@@ -701,6 +701,16 @@ pub struct _SYMCRYPT_HMAC_SHA256_STATE {
     pub pKey: PCSYMCRYPT_HMAC_SHA256_EXPANDED_KEY,
     pub magic: SIZE_T,
 }
+
+// TODO: discuss 
+// unsafe impl Send for _SYMCRYPT_HMAC_SHA256_STATE {
+//     // TODO
+// }
+
+// unsafe impl Sync for _SYMCRYPT_HMAC_SHA256_STATE {
+//     // TODO
+// }
+
 #[test]
 fn bindgen_test_layout__SYMCRYPT_HMAC_SHA256_STATE() {
     const UNINIT: ::std::mem::MaybeUninit<_SYMCRYPT_HMAC_SHA256_STATE> =
@@ -827,6 +837,16 @@ pub struct _SYMCRYPT_HMAC_SHA384_STATE {
     pub pKey: PCSYMCRYPT_HMAC_SHA384_EXPANDED_KEY,
     pub magic: SIZE_T,
 }
+
+// TODO: Discuss 
+// unsafe impl Send for _SYMCRYPT_HMAC_SHA384_STATE {
+//     // TODO
+// }
+
+// unsafe impl Sync for _SYMCRYPT_HMAC_SHA384_STATE {
+//     // TODO
+// }
+
 #[test]
 fn bindgen_test_layout__SYMCRYPT_HMAC_SHA384_STATE() {
     const UNINIT: ::std::mem::MaybeUninit<_SYMCRYPT_HMAC_SHA384_STATE> =
@@ -2842,6 +2862,32 @@ pub struct _SYMCRYPT_ECURVE {
     pub H: PSYMCRYPT_INT,
     pub magic: SIZE_T,
 }
+
+// TODO: Discuss
+unsafe impl Send for _SYMCRYPT_ECURVE {
+
+}
+
+unsafe impl Sync for _SYMCRYPT_ECURVE {
+
+}
+
+// unsafe impl Send for _SYMCRYPT_ECURVE_PARAMS {
+
+// }
+
+// unsafe impl Sync for _SYMCRYPT_ECURVE_PARAMS {
+
+// }
+
+// unsafe impl Sync for PSYMCRYPT_ECURVE {
+
+// }
+
+// unsafe impl Send for PSYMCRYPT_ECURVE {
+
+// }
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union _SYMCRYPT_ECURVE__bindgen_ty_1 {
@@ -3272,6 +3318,16 @@ pub struct _SYMCRYPT_ECKEY {
     pub piPrivateKey: PSYMCRYPT_INT,
     pub magic: SIZE_T,
 }
+
+// TODO: discuss
+// unsafe impl Send for _SYMCRYPT_ECKEY {
+
+// }
+
+// unsafe impl Sync for _SYMCRYPT_ECKEY {
+
+// }
+
 #[test]
 fn bindgen_test_layout__SYMCRYPT_ECKEY() {
     const UNINIT: ::std::mem::MaybeUninit<_SYMCRYPT_ECKEY> = ::std::mem::MaybeUninit::uninit();
@@ -3733,6 +3789,9 @@ extern "C" {
 }
 extern "C" {
     pub fn SymCryptHkdfSelfTest();
+}
+extern "C" {
+    pub fn SymCryptRandom(pbRandom: PBYTE, cbRandom: SIZE_T);
 }
 pub const _SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_LSB_FIRST: _SYMCRYPT_NUMBER_FORMAT = 1;
 pub const _SYMCRYPT_NUMBER_FORMAT_SYMCRYPT_NUMBER_FORMAT_MSB_FIRST: _SYMCRYPT_NUMBER_FORMAT = 2;

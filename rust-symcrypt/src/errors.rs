@@ -1,6 +1,7 @@
 //! Friendly rust errors for SYMCRYPT_ERROR. For more info on SYMCRYPT_ERRORS please refer to symcrypt.h
 
 use std::convert::From;
+use std::fmt;
 use symcrypt_sys;
 
 #[non_exhaustive]
@@ -74,5 +75,35 @@ impl From<symcrypt_sys::SYMCRYPT_ERROR> for SymCryptError {
             }
             _ => SymCryptError::UnknownError(err),
         }
+    }
+}
+
+impl fmt::Display for SymCryptError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let message = match *self {
+            SymCryptError::NoError => "No error",
+            SymCryptError::Unused => "Unused",
+            SymCryptError::WrongKeySize => "Wrong key size",
+            SymCryptError::WrongBlockSize => "Wrong block size",
+            SymCryptError::WrongDataSize => "Wrong data size",
+            SymCryptError::WrongNonceSize => "Wrong nonce size",
+            SymCryptError::WrongTagSize => "Wrong tag size",
+            SymCryptError::WrongIterationCount => "Wrong iteration count",
+            SymCryptError::AuthenticationFailure => "Authentication failure",
+            SymCryptError::ExternalFailure => "External failure",
+            SymCryptError::FipsFailure => "FIPS failure",
+            SymCryptError::HardwareFailure => "Hardware failure",
+            SymCryptError::NotImplemented => "Not implemented",
+            SymCryptError::InvalidBlob => "Invalid blob",
+            SymCryptError::BufferTooSmall => "Buffer too small",
+            SymCryptError::InvalidArgument => "Invalid argument",
+            SymCryptError::MemoryAllocationFailure => "Memory allocation failure",
+            SymCryptError::SignatureVerificationFailure => "Signature verification failure",
+            SymCryptError::IncompatibleFormat => "Incompatible format",
+            SymCryptError::ValueTooLarge => "Value too large",
+            SymCryptError::SessionReplayFailure => "Session replay failure",
+            SymCryptError::UnknownError(code) => return write!(f, "Unknown error: {}", code),
+        };
+        write!(f, "{}", message)
     }
 }
