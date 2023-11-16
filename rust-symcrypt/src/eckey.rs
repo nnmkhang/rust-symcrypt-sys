@@ -12,35 +12,32 @@ pub enum CurveType {
     Curve25519,
 }
 
-/// [`EcKey`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY, this is to let rust handle the drop and subsequent free.
-/// EcKey must be allocated after [`EcCurve`] and free'd before EcCurve is free'd.
-///
-/// Allocation for EcKey is handled by SymCrypt via SymCryptEcKeyAllocate, and is subsequently stored on the stack, therefore pointer will
-/// not move and Box<> is not needed.
+/// [`EcKey`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY.
 pub struct EcKey {
+    /// Allocation for EcKey is handled by SymCrypt via SymCryptEcKeyAllocate, and is subsequently stored on the stack, therefore pointer will
+    /// not move and Box<> is not needed.
     inner: symcrypt_sys::PSYMCRYPT_ECKEY,
     curve: &'static EcCurve,
 }
 
-/// [`EcCurve`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECURVE, this is to let rust handle the drop and subsequent free.
-/// EcCurve must be allocated before [`EcKey`] is allocated, and dropped after EcKey is dropped.
+/// [`EcCurve`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECURVE.
 pub(crate) struct EcCurve(pub(crate) symcrypt_sys::PSYMCRYPT_ECURVE);
 
 /// Impl for [`EcKey`]
 ///
-/// [`new()`] returns a new EcKey object that has the key and curve allocated. This key must be allocated after the [`EcCurve`] has been allocated
-/// and dropped after [`EcCurve`] has been dropped.
+/// [`new()`] returns a new EcKey object that has the key and curve allocated. 
 ///
 /// [`inner()`] is an accessor to the inner field of the EcKey struct. Reference is not needed here since we are working with a raw SymCrypt pointer.
 ///
 /// [`curve()`] is an accessor to the curve field of the EcKey struct. Reference is used here since EcKey should still maintain ownership of the EcCurve.
 impl EcKey {
     pub(crate) fn new(curve: CurveType) -> Result<Self, SymCryptError> {
-        let ec_curve = &EcCurve::new(curve);
+        let ec_curve = &EcCurve::new(curve); // Can fail here due to insufficient memory.
 
         unsafe {
             // SAFETY: FFI calls
-            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(ec_curve.0); // stack allocated since will do SymCryptEckeyAllocate.
+            // Stack allocated since we will do SymCryptEckeyAllocate.
+            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(ec_curve.0); 
             if key_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
@@ -81,7 +78,8 @@ unsafe impl Sync for EcCurve {
     // ??
 }
 
-/// Must drop the [`EcKey`] before the expanded [`EcCurve`] is dropped.
+/// Must drop the [`EcKey`] before the expanded [`EcCurve`] is dropped
+/// [`EcCurve`] has static lifetime so this will always be the case.
 impl Drop for EcKey {
     fn drop(&mut self) {
         unsafe {
@@ -104,11 +102,13 @@ fn internal_new(curve: CurveType) -> Result<EcCurve, SymCryptError> {
     unsafe {
         // SAFETY: FFI calls
         symcrypt_init(); // Will only init once, subsequent calls to symcrypt_init() will be no-ops.
-        let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0); // stack allocated since will do SymCryptEcCurveAllocate.
+
+        // Stack allocated since will do SymCryptEcCurveAllocate.
+        let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0); 
         if curve_ptr.is_null() {
             return Err(SymCryptError::MemoryAllocationFailure);
         }
-        // curve needs to be wrapped to properly free the curve in the case there is an error in future initialization in EcDsa or EcDh.
+        // Curve needs to be wrapped to properly free the curve in the case there is an error in future initialization in EcDsa or EcDh.
         Ok(EcCurve(curve_ptr))
     }
 }
