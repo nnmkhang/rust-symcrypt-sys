@@ -6,20 +6,27 @@ use std::pin::Pin;
 use symcrypt_sys;
 
 
-/// Contents of [`GcmExpandedKey`] is Pin<Box<>>'d since the memory address for Self is moved around when returning from GcmExpandedKey::new()
+/// [`GcmExpandedKey`] has is a struct that holds the Gcm expanded key from SymCrypt.
+/// 
+/// [`expanded_key`] holds the key from SymCrypt which is Pin<Box<>>'d since the memory address for Self is moved around when
+/// returning from GcmExpandedKey::new()
+/// 
+/// [`key_length`] holds the length of the expanded key. This value is normally 16 or 32 bytes.
 ///
 /// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
 /// doing so would lead to use-after-free and inconsistent states.
-pub struct GcmExpandedKey(Pin<Box<symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY>>);
-
+pub struct GcmExpandedKey{
+    expanded_key: Pin<Box<symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY>>,
+    key_length: usize
+}
 
 /// Impl for the GcmExpandedKey Struct.
 /// 
 /// [`new`] takes in a reference to a key and a [`BlockCipherType`] and returns an expanded key that is Pin<Box<>>'d.
-/// This function can fail and will propagate the error back to the caller.
+/// This function can fail and will propagate the error back to the caller. This call will fail if the wrong key size is provided.
 /// The only accepted Cipher for GCM is [`BlockCipherType::AesBlock`]
 /// 
-/// [`encrypt_in_place`]` and [`decrypt_in_place`] take in an allocated buffer as an out parameter for performance reasons. This is for scenarios
+/// [`encrypt_in_place`]` and [`decrypt_in_place`] take in an allocated buffer as an in/out parameter for performance reasons. This is for scenarios
 /// such as encrypting over a stream of data; allocating and copying data from a return will be costly performance wise.
 /// 
 /// [`encrypt_in_place`] takes in a [`buffer`] that has the plain text data to be encrypted. After the encryption has been completed,
@@ -34,7 +41,7 @@ impl GcmExpandedKey {
     pub fn new(key: &[u8], cipher: BlockCipherType) -> Result<Self, SymCryptError> {
         let mut expanded_key = Box::pin(symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default()); // boxing here so that the memory is not moved
         gcm_expand_key(key, &mut expanded_key, convert_cipher(cipher))?;
-        let gcm_expanded_key = GcmExpandedKey(expanded_key);
+        let gcm_expanded_key = GcmExpandedKey{expanded_key:expanded_key, key_length: key.len()};
         Ok(gcm_expanded_key)
     }
 
@@ -48,7 +55,7 @@ impl GcmExpandedKey {
         unsafe {
             // SAFETY: FFI calls
             symcrypt_sys::SymCryptGcmEncrypt(
-                &*self.0,
+                &*self.expanded_key,
                 nonce.as_ptr(),
                 nonce.len() as symcrypt_sys::SIZE_T,
                 auth_data.as_ptr(),
@@ -72,7 +79,7 @@ impl GcmExpandedKey {
         unsafe {
             // SAFETY: FFI calls
             match symcrypt_sys::SymCryptGcmDecrypt(
-                &*self.0,
+                &*self.expanded_key,
                 nonce.as_ptr(),
                 nonce.len() as symcrypt_sys::SIZE_T,
                 auth_data.as_ptr(),
@@ -90,7 +97,7 @@ impl GcmExpandedKey {
     }
 
     pub fn key_len(&self) -> usize {
-        self.0.cbKey as usize
+        self.key_length
     }
 }
 
@@ -270,5 +277,13 @@ mod test {
 
         let result = validate_gcm_parameters(cipher, &nonce_array, &auth_data, &pt, &expected_tag);
         assert_eq!(result.unwrap_err(), SymCryptError::WrongTagSize);
+    }
+
+    #[test]
+    fn test_gcm_expanded_key_get_key_length() {
+        let p_key = hex::decode("feffe9928665731c6d6a8f9467308308").unwrap();
+        let cipher = BlockCipherType::AesBlock;
+        let gcm_state = GcmExpandedKey::new(&p_key, cipher).unwrap();
+        assert_eq!(gcm_state.key_len(), 16);
     }
 }

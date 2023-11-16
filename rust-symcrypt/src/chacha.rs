@@ -9,7 +9,7 @@ use symcrypt_sys;
 /// [`nonce`] must be 12 bytes
 /// [`auth_data`] is an optional parameter that can be provided, if you do not wish to provide auth data just
 /// input an empty array.
-/// [`buffer`] is an in/out parameter that contains the plain text data to be encrypted. after the encryption is complete, the
+/// [`buffer`] is an out parameter that contains the plain text data to be encrypted. after the encryption is complete, the
 /// resulting cipher text will be written to the [`buffer`] parameter.
 /// [`tag`] must be 16 bytes and is an in/out parameter that the tag result will be written to.
 ///
