@@ -14,8 +14,8 @@ pub enum CurveType {
 
 /// [`EcKey`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY.
 pub struct EcKey {
-    /// Allocation for EcKey is handled by SymCrypt via SymCryptEcKeyAllocate, and is subsequently stored on the stack, therefore pointer will
-    /// not move and Box<> is not needed.
+    // Allocation for EcKey is handled by SymCrypt via SymCryptEcKeyAllocate, and is subsequently stored on the stack, therefore pointer will
+    // not move and Box<> is not needed.
     inner: symcrypt_sys::PSYMCRYPT_ECKEY,
     curve: &'static EcCurve,
 }
