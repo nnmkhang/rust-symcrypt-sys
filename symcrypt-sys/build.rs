@@ -3,12 +3,31 @@ extern crate bindgen;
 use std::env;
 use std::path::PathBuf;
 
+
+// TODO TOM:
+/// Figure out relative path for the .lib
+/// move over the bindgen generation to another file
+/// write better documentation regarding this stuff
+
+
 /// SymCrypt must
 fn main() {
     #[cfg(target_os = "windows")]
     {
-        println!("cargo:rustc-link-search=native=C:/Windows/System32/"); // ! Work around, looking for better solution
-        println!("cargo:libdir=../SymCrypt/inc");
+        //println!("cargo:rustc-link-search=native=C:/Windows/System32/"); // ! Work around, looking for better solution
+        println!("cargo:rustc-link-search=native=C:/Code/"); // ! Work around, looking for better solution
+
+        // above is used to link search path, both are happening at link time, this will search for the .lib, the OS will do the run time, this is where the OS will
+        // look for the .dll 
+
+        // wen we do cargo test, we do the link, we tell them where to find the lib that needs to be linked to the application
+        // after we run cargo test, they will do the linking and then pass over to the OS which will just run an .exe file.
+
+        // todo: need to find a way to link to a relative path. 
+
+        // what we need to do is figure out a way to include a relative path to the .lib, as part of the crate 
+
+        println!("cargo:libdir=../SymCrypt/inc"); // for .h files, only used for creating the bindings
         println!("cargo:rustc-link-lib=dylib=symcrypttestmodule"); // test module used in lieu of official symcrypt dll
                                                                    // this dll will be in Windows/System32. This is to mirror future plans; as symcrypt is planned to ship with windows
                                                                    // symcrypttestmodule* files must be placed in Windows/System32/ as a workaround at the moment.
