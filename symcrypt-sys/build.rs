@@ -1,59 +1,54 @@
-extern crate bindgen;
-
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path,PathBuf};
 
-
-// TODO TOM:
-/// Figure out relative path for the .lib
-/// move over the bindgen generation to another file
-/// write better documentation regarding this stuff
-
-
-/// SymCrypt must
 fn main() {
     #[cfg(target_os = "windows")]
     {
-        //println!("cargo:rustc-link-search=native=C:/Windows/System32/"); // ! Work around, looking for better solution
-        println!("cargo:rustc-link-search=native=C:/Code/"); // ! Work around, looking for better solution
+        // This will set a directory to be set to the root of the symcrypt-sys crate. This is to get relative paths to find
+        // the symcrypttestmodule.lib file. 
+        let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
-        // above is used to link search path, both are happening at link time, this will search for the .lib, the OS will do the run time, this is where the OS will
-        // look for the .dll 
+        // Look for the .lib file during link time. We are searching the inc/ path which has been set to be relative to the 
+        // project root directory. We are checking in the .lib file to maintain control over future FIPs compliance as well
+        // as SymCrypt binding API control.
+        println!("cargo:rustc-link-search=native={}", Path::new(&dir).join("inc/").display());
 
-        // wen we do cargo test, we do the link, we tell them where to find the lib that needs to be linked to the application
-        // after we run cargo test, they will do the linking and then pass over to the OS which will just run an .exe file.
+        println!("cargo:rustc-link-lib=dylib=symcrypttestmodule"); // test module to search for in lieu of symcrypt.dll
 
-        // todo: need to find a way to link to a relative path. 
 
-        // what we need to do is figure out a way to include a relative path to the .lib, as part of the crate 
+        // During run time, the OS will handle finding the symcrypttestmodule.dll file. The places Windows will look will be:
+        // 1. The folder from which the application loaded.
+        // 2. The system folder. Use the GetSystemDirectory function to retrieve the path of this folder.
+        // 3. The 16-bit system folder. There's no function that obtains the path of this folder, but it is searched.
+        // 4. The Windows folder. Use the GetWindowsDirectory function to get the path of this folder.
+        // 5. The current folder.
+        // 6. The directories that are listed in the PATH environment variable. 
 
-        println!("cargo:libdir=../SymCrypt/inc"); // for .h files, only used for creating the bindings
-        println!("cargo:rustc-link-lib=dylib=symcrypttestmodule"); // test module used in lieu of official symcrypt dll
-                                                                   // this dll will be in Windows/System32. This is to mirror future plans; as symcrypt is planned to ship with windows
-                                                                   // symcrypttestmodule* files must be placed in Windows/System32/ as a workaround at the moment.
+        // For more info please see: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order
+
+        // For the least invasive usage, we suggest putting the symcrypttestmodule.dll inside of same folder as the .exe file.
+        // This will be something like: 
+
+        // Note: This process is a band-aid. Long-term SymCrypt will be shipped with Windows which will make this process much more
+        // streamlined. 
+
     }
 
     #[cfg(target_os = "linux")]
     {
-        println!("cargo:libdir=../SymCrypt/inc");
         println!("cargo:rustc-link-lib=dylib=symcrypt"); // the lib prefix for libsymcrypt is implied on linux
+
+        // Linux based systems use a .so file format that is different from the .lib and .dll format on Windows.
 
         // TODO: Create a script that copies all libsymcrypt.so* files from SymCrypt path to /lib/x86_64-linux-gnu/
         // The ld linker will look for the symcrypt.so files within /lib/x86_64-linux-gnu/. No need to set a hardcoded path.
         // This is not needed on Mariner as it comes with SymCrypt out of the box.
     }
 
-    // Since we are pulling in symcrypt as a submodule, it should be pretty easy to run a vendored build, this would allow us
-    // to hard stop at a commit and ensure that there is no discrepancy between build version and header version
-
-    // TODO: Factor out binding generation. Bindgen should only be run manually with updates to underlying SymCrypt code that
-    // we decide what to take.
-    println!("cargo:rerun-if-changed=/wrapper.h");
-
-    // TODO: Discuss if factoring the .allowlist_functions to another file is better approach
-
+    println!("cargo:libdir=../SymCrypt/inc"); // for .h files, only used for creating the bindings
+    println!("cargo:rerun-if-changed=inc/wrapper.h");
     let bindings = bindgen::Builder::default()
-        .header("wrapper.h")
+        .header("inc/wrapper.h")
         .clang_arg("-v")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // ALLOWLIST
