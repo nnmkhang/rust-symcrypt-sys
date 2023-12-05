@@ -41,33 +41,24 @@ fn main() {
         .allowlist_function("SymCryptModuleInit")
         .allowlist_var("^(SYMCRYPT_CODE_VERSION.*)$")
         // HASH FUNCTIONS
-        .allowlist_function("^(SymCryptSha256.*)$")
-        .allowlist_function("^(SymCryptSha384.*)$")
-        .allowlist_var("SYMCRYPT_SHA256_RESULT_SIZE")
-        .allowlist_var("SYMCRYPT_SHA384_RESULT_SIZE")
+        .allowlist_function("^(SymCryptSha(256|384)(?:Init|Append|Result|StateCopy)?)$")
+        .allowlist_var("^(SYMCRYPT_(SHA256|SHA384)_RESULT_SIZE$)")
         // HMAC FUNCTIONS
-        .allowlist_function("^(SymCryptHmacSha256.*)$")
-        .allowlist_function("^(SymCryptHmacSha384.*)$")
+        .allowlist_function("^(SymCryptHmacSha(256|384)(?:ExpandKey|Init|Append|Result|StateCopy)?)$")
         // GCM FUNCTIONS
-        .allowlist_function("^(SymCryptGcm.*)$")
-        .allowlist_function("SymCryptChaCha20Poly1305Encrypt")
-        .allowlist_function("SymCryptChaCha20Poly1305Decrypt")
-        .allowlist_function("SymCryptTlsPrf1_2ExpandKey")
-        .allowlist_function("SymCryptTlsPrf1_2Derive")
-        .allowlist_function("SymCryptTlsPrf1_2")
+        .allowlist_function("^(SymCryptGcm(?:ValidateParameters|ExpandKey|Encrypt|Decrypt|Init|StateCopy|AuthPart|DecryptPart|EncryptPart|EncryptFinal|DecryptFinal)?)$")
+        .allowlist_function("SymCryptChaCha20Poly1305(Encrypt|Decrypt)")
+        .allowlist_function("^SymCryptTlsPrf1_2(?:ExpandKey|Derive)?$")
         .allowlist_var("SymCryptAesBlockCipher")
-        // HKDF functions
-        .allowlist_function("^(SymCryptHkdf.*)$")
-        // ECDH Key Agreement
-        .allowlist_var("SymCryptEcurveParamsNistP256")
-        .allowlist_var("SymCryptEcurveParamsNistP384")
-        .allowlist_var("SymCryptEcurveParamsCurve25519")
+        // HKDF FUNCTIONS
+        .allowlist_function("^(SymCryptHkdf.*)$") // TODO: Tighten bindgen after implementation is complete.
+        // ECDH KEY AGREEMENT FUNCTIONS
+        .allowlist_function("^SymCryptEcurve(Allocate|Free|SizeofFieldElement)$")
+        .allowlist_var("^SymCryptEcurveParams(NistP256|NistP384|Curve25519)$")
+        .allowlist_function("^(SymCryptEckey(Allocate|Free|SizeofPublicKey|GetValue|SetRandom|SetValue|SetRandom|))$")
         .allowlist_var("SYMCRYPT_FLAG_ECKEY_ECDH")
-        .allowlist_function("^(SymCryptEcurve.*)$")
-        .allowlist_function("^(SymCryptEckey.*)$")
         .allowlist_function("SymCryptEcDhSecretAgreement")
-        .allowlist_function("SymCryptSizeofEckeyFromCurve")
-        // Utility functions
+        // UTILITY FUNCTIONS
         .allowlist_function("SymCryptWipe")
         .allowlist_function("SymCryptRandom")
         
