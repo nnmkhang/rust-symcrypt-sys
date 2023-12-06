@@ -4,10 +4,11 @@
 
 ## Introduction
 
-Within this repository, there are two crates:
+Within this repository, there are 3 crates:
 
-1. **symcrypt-sys**: Very basic Rust/C FFI bindings over SymCrypt using bindgen.
+1. **symcrypt-sys**: Very basic Rust/C FFI bindings over SymCrypt.
 2. **rust-symcrypt**: Provides friendly Rust wrappers over `symcrypt-sys`.
+3. **symcrypt-bindgen**: Generates bindings for `symcrypt-sys` via Bindgen.
 
 The purpose of these crates is to bring FIPS-compliant cryptography to the Rust Ecosystem. Currently, there is only binding support for Windows and Linux.
 

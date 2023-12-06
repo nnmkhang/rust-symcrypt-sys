@@ -3,7 +3,7 @@ name = "symcrypt-sys"
 authors = ["nnmkhang"]
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
-description = "Symcrypt for Rust"
+description = "SymCrypt for Rust"
 edition = "2021"
 build = "build.rs"
 
