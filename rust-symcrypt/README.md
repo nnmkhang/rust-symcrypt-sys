@@ -24,6 +24,7 @@ During runtime, Windows will handle finding all needed `dll`'s in order to run t
 4. The current folder.
 5. The directories listed in the PATH environment variable.
 
+For more info please see: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order
 
 Here are some recommended options to ensure your `symcrypttestmodule.dll` is found.
 
@@ -33,7 +34,7 @@ Here are some recommended options to ensure your `symcrypttestmodule.dll` is fou
 	```powershell
 	$env:PATH = "C:\Code\rust-symcrypt-sys\rust-symcrypt\lib;$env:PATH"
 	```
-	**Note:** This change will only persist within the current process, and you must 	re-set the PATH environment variable after closing the PowerShell window.
+	**Note:** This change will only persist within the current process, and you must re-set the PATH environment variable after closing the PowerShell window.
 
 3. The easiest option is to manually copy your `symcrypttestmodule.dll` into your `C:/Windows/System32/` folder path. Windows will always search this path for `.dll` files. All future development using `symcrypttestmodule.dll` on your machine will also search the `C:/Windows/System32` path.
 
@@ -64,7 +65,7 @@ ECDH:
 - ECDH Secret Agreement
 
 ## Usage
-There are unit tests attached to each file that show how to use each function. Included is some sample code to do a stateless Sha256 hash.
+There are unit tests attached to each file that show how to use each function. Included is some sample code to do a stateless Sha256 hash. `symcrypt_init()` must be run before any other calls to the underlying symcrypt code.
 
 **Note:** This code snippet also uses the [hex](https://crates.io/crates/hex) crate.
 
@@ -79,12 +80,14 @@ symcrypt = "0.1.0"
 include symcrypt in your code  
 
 ```rust
-use  symcrypt::hash::sha256; 
+use symcrypt::hash::sha256; 
+use symcrpt::symcrypt_init;
 fn  main() {
-    let  data = hex::decode("641ec2cf711e").unwrap();
-    let  expected: &str = "cfdbd6c9acf9842ce04e8e6a0421838f858559cf22d2ea8a38bd07d5e4692233";
+    symcrpyt_init();
+    let data = hex::decode("641ec2cf711e").unwrap();
+    let expected: &str = "cfdbd6c9acf9842ce04e8e6a0421838f858559cf22d2ea8a38bd07d5e4692233";
 
-    let  result = sha256(&data);
+    let result = sha256(&data);
     assert_eq!(hex::encode(result), expected);
 }
 ```

@@ -872,6 +872,15 @@ impl Default for _SYMCRYPT_HMAC_SHA256_STATE {
         }
     }
 }
+
+unsafe impl Send for _SYMCRYPT_HMAC_SHA256_STATE {
+    // TODO: discuss send/sync implementation for rustls
+}
+
+unsafe impl Sync for _SYMCRYPT_HMAC_SHA256_STATE {
+    // TODO: discuss send/sync implementation for rustls
+}
+
 pub type SYMCRYPT_HMAC_SHA256_STATE = _SYMCRYPT_HMAC_SHA256_STATE;
 pub type PSYMCRYPT_HMAC_SHA256_STATE = *mut _SYMCRYPT_HMAC_SHA256_STATE;
 pub type PCSYMCRYPT_HMAC_SHA256_STATE = *const SYMCRYPT_HMAC_SHA256_STATE;
@@ -998,6 +1007,14 @@ impl Default for _SYMCRYPT_HMAC_SHA384_STATE {
         }
     }
 }
+unsafe impl Send for _SYMCRYPT_HMAC_SHA384_STATE {
+    // TODO: discuss send/sync implementation for rustls
+}
+
+unsafe impl Sync for _SYMCRYPT_HMAC_SHA384_STATE {
+    // TODO: discuss send/sync implementation for rustls
+}
+
 pub type SYMCRYPT_HMAC_SHA384_STATE = _SYMCRYPT_HMAC_SHA384_STATE;
 pub type PSYMCRYPT_HMAC_SHA384_STATE = *mut _SYMCRYPT_HMAC_SHA384_STATE;
 pub type PCSYMCRYPT_HMAC_SHA384_STATE = *const SYMCRYPT_HMAC_SHA384_STATE;
@@ -1857,6 +1874,15 @@ pub type PSYMCRYPT_BLOCKCIPHER_MAC_MODE = ::std::option::Option<
 pub type PSYMCRYPT_BLOCKCIPHER_AEADPART_MODE = ::std::option::Option<
     unsafe extern "C" fn(pState: PVOID, pbSrc: PCBYTE, pbDst: PBYTE, cbData: SIZE_T),
 >;
+
+unsafe impl Send for _SYMCRYPT_BLOCKCIPHER {
+    // TODO: discuss send/sync implementation for rustls
+}
+
+unsafe impl Sync for _SYMCRYPT_BLOCKCIPHER {
+    // TODO: discuss send/sync implementation for rustls
+}
+
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_BLOCKCIPHER {
@@ -2924,6 +2950,15 @@ impl Default for _SYMCRYPT_ECURVE_INFO_PRECOMP {
     }
 }
 pub type SYMCRYPT_ECURVE_INFO_PRECOMP = _SYMCRYPT_ECURVE_INFO_PRECOMP;
+
+unsafe impl Send for _SYMCRYPT_ECURVE {
+    // TODO: discuss send/sync implemenation for rustls
+}
+
+unsafe impl Sync for _SYMCRYPT_ECURVE {
+    // TODO: discuss send/sync implementation for rustls
+} 
+
 #[repr(C)]
 #[repr(align(32))]
 #[derive(Copy, Clone)]
@@ -3823,6 +3858,15 @@ pub const _SYMCRYPT_ECURVE_GEN_ALG_ID_SYMCRYPT_ECURVE_GEN_ALG_ID_NULL: _SYMCRYPT
     0;
 pub type _SYMCRYPT_ECURVE_GEN_ALG_ID = ::std::os::raw::c_int;
 pub use self::_SYMCRYPT_ECURVE_GEN_ALG_ID as SYMCRYPT_ECURVE_GEN_ALG_ID;
+
+unsafe impl Send for _SYMCRYPT_ECURVE_PARAMS {
+    // TODO: discuss send/sync implementation for rustls
+}  
+
+unsafe impl Sync for _SYMCRYPT_ECURVE_PARAMS {
+    // TODO: discuss send/sync implementation for rustls
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct _SYMCRYPT_ECURVE_PARAMS {

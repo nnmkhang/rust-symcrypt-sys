@@ -4,13 +4,12 @@ use std::env;
 use std::path::PathBuf;
 
 
-/// This file is used to generate SymCrypt bindings. We have move this over to a separate crate because it should only be 
-/// used by developers of the rust-symcrypt, and symcrypt-sys crates. Since bindings are maintained and directly checked into
+/// This file is used to generate SymCrypt bindings. We have moved this over to a separate crate because it should only be 
+/// used by developers of the symcrypt, and symcrypt-sys crates. Since bindings are maintained and directly checked into
 /// symcrypt-sys crate there is no need to have the bindgen bulk included in the symcrypt-sys crate. 
 
 
 fn main() {
-
     println!("cargo:libdir=../SymCrypt/inc"); // SymCrypt *.h files are needed for binding generation. If you are missing this,
     // try pulling SymCrypt as a git module 
     println!("cargo:rerun-if-changed=inc/wrapper.h");
@@ -20,6 +19,7 @@ fn main() {
         .clang_arg("-v")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // ALLOWLIST
+
         // INIT FUNCTIONS
         .allowlist_function("SymCryptModuleInit")
         .allowlist_var("^(SYMCRYPT_CODE_VERSION.*)$")
@@ -52,6 +52,6 @@ fn main() {
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
-        .write_to_file(out_path.join("generated_bindings.rs"))
+        .write_to_file(out_path.join("raw_generated_bindings.rs"))
         .expect("Couldn't write bindings!");
 }

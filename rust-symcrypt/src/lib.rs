@@ -34,3 +34,11 @@ pub mod errors;
 pub mod gcm;
 pub mod hash;
 pub mod hmac;
+
+
+// Fix documentation on the APIs.
+// run cargo docs to ensure that the docs look okay.
+// add comment on the gcm to say that our symcrypt_init() call is only to make sure that its been run or we will error out.
+// Also emphasize thta this is a no-op if the call has already been ran due to RUN ONCE call on the function. 
+// Comb through all src files to ensure that its pristine
+// remove ../ path dependancy on symcrypt-sys since we can use the cargo dependancy.

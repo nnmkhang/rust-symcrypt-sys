@@ -1,41 +1,39 @@
 use std::env;
 use std::path::Path;
-use std::fs;
 
 fn main() {
     #[cfg(target_os = "windows")]
     {
         // This will set a directory to be set to the root of the symcrypt-sys crate. This is to get relative paths to find
-        // the symcrypttestmodule.lib file.
+        // the symcrypttestmodule.lib file during link time from other crates.
         let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
-        // Look for the .lib file during link time. We are searching the inc/ path which has been set to be relative to the 
-        // project root directory. We are checking in the .lib file to maintain control over future FIPs compliance as well
-        // as SymCrypt binding API control.
-        println!("cargo:rustc-link-search=native={}", Path::new(&dir).join("inc/").display());
+        // Look for the .lib file during link time. We are searching the lib/ path which has been set to be relative to the 
+        // crate root directory. We are checking in the .lib file to maintain control over future FIPs compliance as well
+        // as SymCrypt binding control.
+        println!("cargo:rustc-link-search=native={}", Path::new(&dir).join("lib/").display());
 
-        println!("cargo:rustc-link-lib=dylib=symcrypttestmodule"); // test module to search for in lieu of symcrypt.dll
+        // Test module to search for in lieu of symcrypt.dll
+        println!("cargo:rustc-link-lib=dylib=symcrypttestmodule");
 
         // During run time, the OS will handle finding the symcrypttestmodule.dll file. The places Windows will look will be:
         // 1. The folder from which the application loaded.
         // 2. The system folder. Use the GetSystemDirectory function to retrieve the path of this folder.
-        // 3. The 16-bit system folder. There's no function that obtains the path of this folder, but it is searched.
-        // 4. The Windows folder. Use the GetWindowsDirectory function to get the path of this folder.
-        // 5. The current folder.
-        // 6. The directories that are listed in the PATH environment variable. 
+        // 3. The Windows folder. Use the GetWindowsDirectory function to get the path of this folder.
+        // 4. The current folder.
+        // 5. The directories that are listed in the PATH environment variable. 
 
         // For more info please see: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order
 
         // For the least invasive usage, we suggest putting the symcrypttestmodule.dll inside of same folder as the .exe file.
         // This will be something like: C:/your-project/target/debug/
 
-        // you can also set your PATH environment variable to include the symcrypt-sys/inc/ path.
-        // Example: $env:PATH = "C:\Code\rust-symcrypt-sys\rust-symcrypt\inc;$env:PATH"
-        // Note: This will only work inside the current process. Once the powershell window is closed you must re run the command.
+        // you can also set your PATH environment variable to include the symcrypt-sys/lib/ path.
+        // Example: $env:PATH = "C:\Code\rust-symcrypt-sys\rust-symcrypt\lib;$env:PATH"
+        // Note: This will only work inside the current process. Once the powershell window is closed you must re set PATH
 
         // Note: This process is a band-aid. Long-term SymCrypt will be shipped with Windows which will make this process much more
         // streamlined. 
-
     }
 
     #[cfg(target_os = "linux")]

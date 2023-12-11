@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "rust-symcrypt",
-    "symcrypt-sys",
-    "symcrypt-bindgen"
-]
-workspace.resolver = "2"
