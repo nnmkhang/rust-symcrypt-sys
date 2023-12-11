@@ -102,11 +102,11 @@ impl GcmExpandedKey {
 }
 
 unsafe impl Send for GcmExpandedKey {
-
+    // TODO: Configure send/sync traits
 }
 
 unsafe impl Sync for GcmExpandedKey {
-    
+    // TODO: Configure send/sync traits
 }
 
 
