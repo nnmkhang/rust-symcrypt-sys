@@ -5,43 +5,46 @@ use crate::errors::SymCryptError;
 use std::pin::Pin;
 use symcrypt_sys;
 
-
-/// [`GcmExpandedKey`] has is a struct that holds the Gcm expanded key from SymCrypt.
-/// 
+/// [`GcmExpandedKey`] is a struct that holds the Gcm expanded key from SymCrypt.
+///
 /// [`expanded_key`] holds the key from SymCrypt which is Pin<Box<>>'d since the memory address for Self is moved around when
 /// returning from GcmExpandedKey::new()
-/// 
+///
 /// [`key_length`] holds the length of the expanded key. This value is normally 16 or 32 bytes.
 ///
 /// SymCrypt expects the address for its structs to stay static through the structs lifetime to guarantee that structs are not memcpy'd as
 /// doing so would lead to use-after-free and inconsistent states.
-pub struct GcmExpandedKey{
+pub struct GcmExpandedKey {
     expanded_key: Pin<Box<symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY>>,
-    key_length: usize
+    key_length: usize,
 }
 
 /// Impl for the GcmExpandedKey Struct.
-/// 
-/// [`new`] takes in a reference to a key and a [`BlockCipherType`] and returns an expanded key that is Pin<Box<>>'d.
-/// This function can fail and will propagate the error back to the caller. This call will fail if the wrong key size is provided.
-/// The only accepted Cipher for GCM is [`BlockCipherType::AesBlock`]
-/// 
+///
+
+///
 /// [`encrypt_in_place`]` and [`decrypt_in_place`] take in an allocated buffer as an in/out parameter for performance reasons. This is for scenarios
 /// such as encrypting over a stream of data; allocating and copying data from a return will be costly performance wise.
-/// 
+///
 /// [`encrypt_in_place`] takes in a [`buffer`] that has the plain text data to be encrypted. After the encryption has been completed,
-/// the [`buffer`] will be over-written to contain the cipher text data. [`encrypt_in_place`] will also take in [`tag`] which is 
-/// a mutable buffer where the resulting tag will be written to. 
-/// 
+/// the [`buffer`] will be over-written to contain the cipher text data. [`encrypt_in_place`] will also take in [`tag`] which is
+/// a mutable buffer where the resulting tag will be written to.
+///
 /// [`decrypt_in_place`] takes in a [`buffer`] that has the cipher text to be decrypted. After the decryption has been completed,
-/// the [`buffer`] will be over-written to contain the plain text data. [`decrypt`] will also take in a [`tag`] which will 
-/// verify the cipher text has not been tampered with. [`decrypt_in_place`] can fail and you must check the result before using the 
-/// value stored in [`buffer`]. 
+/// the [`buffer`] will be over-written to contain the plain text data. [`decrypt`] will also take in a [`tag`] which will
+/// verify the cipher text has not been tampered with. [`decrypt_in_place`] can fail and you must check the result before using the
+/// value stored in [`buffer`].
 impl GcmExpandedKey {
+    /// [`new`] takes in a reference to a key and a [`BlockCipherType`] and returns an expanded key that is Pin<Box<>>'d.
+    /// This function can fail and will propagate the error back to the caller. This call will fail if the wrong key size is provided.
+    /// The only accepted Cipher for GCM is [`BlockCipherType::AesBlock`]
     pub fn new(key: &[u8], cipher: BlockCipherType) -> Result<Self, SymCryptError> {
         let mut expanded_key = Box::pin(symcrypt_sys::SYMCRYPT_GCM_EXPANDED_KEY::default()); // boxing here so that the memory is not moved
         gcm_expand_key(key, &mut expanded_key, convert_cipher(cipher))?;
-        let gcm_expanded_key = GcmExpandedKey{expanded_key:expanded_key, key_length: key.len()};
+        let gcm_expanded_key = GcmExpandedKey {
+            expanded_key: expanded_key,
+            key_length: key.len(),
+        };
         Ok(gcm_expanded_key)
     }
 
@@ -109,7 +112,6 @@ unsafe impl Sync for GcmExpandedKey {
     // TODO: Configure send/sync traits
 }
 
-
 /// Internal function to expand the SymCrypt Gcm Key.
 fn gcm_expand_key(
     key: &[u8],
@@ -131,13 +133,13 @@ fn gcm_expand_key(
 }
 
 /// [`validate_gcm_parameters`] is a utility function that validates the input parameters for a GCM call.
-/// 
+///
 /// [`cipher`] will only accept [`BlockCipherType::AesBlock`]
 /// [`nonce`] is a reference to a nonce array that must be 12 bytes.
 /// [`auth_data`] is an optional parameter that can be provided, if you do not wish to provide auth data just
 /// input an empty array.
 /// [`data`] is a reference to a data array to be encrypted
-/// [`tag`] is a reference to your tag buffer, the size of the tag buffer will be checked. 
+/// [`tag`] is a reference to your tag buffer, the size of the tag buffer will be checked.
 pub fn validate_gcm_parameters(
     cipher: BlockCipherType,
     nonce: &[u8; 12], // GCM nonce length must be 12 bytes

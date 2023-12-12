@@ -1,0 +1,96 @@
+# symcrypt-bindgen
+
+This repo is for development usage. Users should not be generating and using their own raw bindings.
+
+## Prerequisites
+
+Before getting started, ensure you have the following prerequisites installed:
+
+1. **Clang**:
+   - Windows: `winget install LLVM.LLVM`
+   - Linux: `apt install llvm-dev libclang-dev clang`
+
+2. **CMake**:
+   - Windows: Visual Studio Enterprise (no need to activate trial, just need enterprise build tools). [Download](https://visualstudio.microsoft.com/downloads/)
+    - Also, set the PATH: `$env:PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\;${env:PATH}"`
+   - Linux: `sudo apt install cmake`
+
+3. **Python 3 / pip3**:
+   - Windows: `python -m pip3 install --upgrade pip`
+   - Linux: `apt install -f python3-pip`
+
+
+## Installation 
+
+### Windows Instructions
+
+1. Clone the repo:  
+
+`git clone git@github.com:nnmkhang/rust-symcrypt-sys.git`   
+
+You might run into errors with errors if you are using ssh, follow this guide to fix issues: [link](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+
+2. navigate into the root of the repo  
+    `cd rust-symcrypt-sys/`
+
+3. Get SymCrypt submodule    
+    `git submodule update --init SymCrypt` 
+
+4. Navigate to SymCrypt directory   
+    `cd SymCrypt`
+
+5. Get third party need requirements      
+    `pip3 install -r ./scripts/requirements.txt`     
+    `git submodule update --init -- 3rdparty/jitterentropy-library`
+
+6. Build SymCrypt  
+    `cmake -S . -B bin`
+    `cmake --build bin`
+    
+7. Run cargo build on symcrypt-bindgen
+    `cd symcrypt-sys`
+    `cargo build`
+
+This will produce the raw bindings that you can edit. 
+
+
+
+### WSL / Linux Instructions
+
+From Fresh WSL install, you must install the following   
+
+1. `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+2. `sudo apt install cargo`
+3. `sudo apt install cmake`
+4. `sudo apt install -f python3-pip`
+5. `sudo apt install llvm-dev libclang-dev clang`
+
+Installation steps  
+
+1. Clone repo     
+    `git clone git@github.com:nnmkhang/rust-symcrypt-sys.git`
+
+    You might run into errors with errors if you are using ssh, follow this guide to fix issues. [link](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+
+2.  Navigate into the root of the repo    
+    `cd rust-symcrypt-sys/`
+
+3. Get symcrypt dependency    
+    `git submodule update --init SymCrypt`
+
+4. Navigate to SymCrypt directory     
+    `cd SymCrypt`
+
+5. Get third party need requirements  
+    `pip3 install -r ./scripts/requirements.txt`    
+    `git submodule update --init -- 3rdparty/jitterentropy-library`
+
+6. Build SymCrypt  
+    `cmake -S . -B bin`
+    `cmake --build bin`
+
+7. Run cargo build   
+    `cd symcrypt-bindgen`  
+    `cargo build`
+
+This will produce the raw bindings that you can edit. 

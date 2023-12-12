@@ -5,11 +5,13 @@ This crate provides friendly and idiomatic Rust wrappers over [SymCrypt](https:/
 
 This crate has a dependency on `symcrypt-sys`, which utilizes `bindgen` to create Rust/C FFI bindings.
 
+**Note:** As of version 0.1.0, only Windows is supported.
+
 ## Dll Setup
 
 ### Get symcryptestmodule.dll
 
-To use the SymCrypt crate, you must have a `symcrypttestmodule.dll` on your machine and Windows must be able to find it during runtime. You can obtain this `dll` by installing and building [SymCrypt](https://github.com/microsoft/SymCrypt/blob/main/BUILD.md) yourself. For ease of use, a `symcrypttestmodule.dll` will be included in this repository.
+To use the SymCrypt crate, you must have a `symcrypttestmodule.dll` on your machine and Windows must be able to find it during runtime. You can obtain this `dll` by installing and building [SymCrypt](https://github.com/microsoft/SymCrypt/blob/main/BUILD.md). For ease of use, a `symcrypttestmodule.dll` will be included in this repository.
 
 
 ### Make symcrypttestmodule.dll findable
@@ -38,9 +40,9 @@ Here are some recommended options to ensure your `symcrypttestmodule.dll` is fou
 
 3. The easiest option is to manually copy your `symcrypttestmodule.dll` into your `C:/Windows/System32/` folder path. Windows will always search this path for `.dll` files. All future development using `symcrypttestmodule.dll` on your machine will also search the `C:/Windows/System32` path.
 
-**Note:** This process is a short-term solution for Alpha testing. The long-term plan is to have a `symcrypt.dll` shipped with Windows, streamlining the process. In the short term, we are using `symcrypttestmodule.dll` as a workaround.
+**Note:** This process is a short-term solution for alpha testing. The long-term plan is to have a `symcrypt.dll` shipped with Windows, streamlining the process. In the short term, we are using `symcrypttestmodule.dll` as a workaround.
 
-To test that your `symcrypttestmodule.dll` is working correctly, and that Windows is able to find it,  copy it to your `symcrypt/target/debug/deps/` folder, and run `cargo test` on the SymCrypt crate.
+To test that your `symcrypttestmodule.dll` is working correctly, and that Windows is able to find it, copy `symcrypttestmodule.dll` to your `rust-symcrypt/target/debug/deps/` folder, and run `cargo test` on the `symcrypt` crate.
 
 ## Supported APIs
 

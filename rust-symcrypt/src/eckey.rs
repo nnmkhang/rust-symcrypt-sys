@@ -1,10 +1,11 @@
-//! Friendly rust types for CurveTypes.
+//! Friendly rust types for CurveTypes. please see symcrypt.h for more info
 
 use crate::{errors::SymCryptError, symcrypt_init};
 use lazy_static::lazy_static;
 use symcrypt_sys;
 
 /// [`CurveType`] provides an enum of the curve types that can be used when creating an [`EcKey`].
+/// The current curve types supported is `NistP256`, `NistP384`, and `Curve25519`.
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum CurveType {
     NistP256,
@@ -12,24 +13,24 @@ pub enum CurveType {
     Curve25519,
 }
 
-/// [`EcKey`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECKEY.
-pub struct EcKey {
+/// [`EcKey`] is a wrapper around `symcrypt_sys::PSYMCRYPT_ECKEY`.
+pub(crate) struct EcKey {
     // Allocation for EcKey is handled by SymCrypt via SymCryptEcKeyAllocate, and is subsequently stored on the stack, therefore pointer will
     // not move and Box<> is not needed.
     inner: symcrypt_sys::PSYMCRYPT_ECKEY,
     curve: &'static EcCurve,
 }
 
-/// [`EcCurve`] is a wrapper around symcrypt_sys::PSYMCRYPT_ECURVE.
+/// [`EcCurve`] is a wrapper around `symcrypt_sys::PSYMCRYPT_ECURVE`.
 pub(crate) struct EcCurve(pub(crate) symcrypt_sys::PSYMCRYPT_ECURVE);
 
 /// Impl for [`EcKey`]
 ///
-/// [`new()`] returns a new EcKey object that has the key and curve allocated. 
+/// `new()` returns a new [`EcKey`] object that has the key and curve allocated.
 ///
-/// [`inner()`] is an accessor to the inner field of the EcKey struct. Reference is not needed here since we are working with a raw SymCrypt pointer.
+/// `inner()` is an accessor to the inner field of the [`EcKey`] struct.
 ///
-/// [`curve()`] is an accessor to the curve field of the EcKey struct. Reference is used here since EcKey should still maintain ownership of the EcCurve.
+/// `curve()` is an accessor to the curve field of the EcKey struct.
 impl EcKey {
     pub(crate) fn new(curve: CurveType) -> Result<Self, SymCryptError> {
         let ec_curve = &EcCurve::new(curve); // Can fail here due to insufficient memory.
@@ -37,7 +38,7 @@ impl EcKey {
         unsafe {
             // SAFETY: FFI calls
             // Stack allocated since we will do SymCryptEckeyAllocate.
-            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(ec_curve.0); 
+            let key_ptr = symcrypt_sys::SymCryptEckeyAllocate(ec_curve.0);
             if key_ptr.is_null() {
                 return Err(SymCryptError::MemoryAllocationFailure);
             }
@@ -49,33 +50,35 @@ impl EcKey {
         }
     }
 
+    // Reference is not needed here since we are working with a raw SymCrypt pointer.
     pub(crate) fn inner(&self) -> symcrypt_sys::PSYMCRYPT_ECKEY {
         self.inner
     }
 
+    // Reference is used here since EcKey should still maintain ownership of the EcCurve.
     pub(crate) fn curve(&self) -> &EcCurve {
         &self.curve
     }
 }
 
 unsafe impl Send for EcKey {
-    // TODO: Figure out error :
+    // TODO: Discuss send/sync for rustls
     // *const _SYMCRYPT_ECURVE_PARAMS cannot be shared between threads safely
     // the trait Sync is not implemented for *const _SYMCRYPT_ECURVE_PARAMS
 }
 
 unsafe impl Sync for EcKey {
-    // ??
+    // TODO: Discuss send/sync for rustls
 }
 
 unsafe impl Send for EcCurve {
-    // TODO: Figure out error :
+    // TODO: Discuss send/sync for rustls
     // *const _SYMCRYPT_ECURVE_PARAMS cannot be shared between threads safely
     // the trait Sync is not implemented for *const _SYMCRYPT_ECURVE_PARAMS
 }
 
 unsafe impl Sync for EcCurve {
-    // ??
+    // TODO: Discuss send/sync for rustls
 }
 
 /// Must drop the [`EcKey`] before the expanded [`EcCurve`] is dropped
@@ -101,10 +104,12 @@ lazy_static! {
 fn internal_new(curve: CurveType) -> Result<EcCurve, SymCryptError> {
     unsafe {
         // SAFETY: FFI calls
-        symcrypt_init(); // Will only init once, subsequent calls to symcrypt_init() will be no-ops.
+        // Will only init once, subsequent calls to symcrypt_init() will be no-ops. Calling here incase user did
+        // not call symcrypt_init() earlier on.
+        symcrypt_init();
 
         // Stack allocated since will do SymCryptEcCurveAllocate.
-        let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0); 
+        let curve_ptr = symcrypt_sys::SymCryptEcurveAllocate(convert_curve(curve), 0);
         if curve_ptr.is_null() {
             return Err(SymCryptError::MemoryAllocationFailure);
         }

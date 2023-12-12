@@ -25,7 +25,6 @@ pub struct EcDh {
 }
 
 /// Impl for EcDh struct.
-/// The EcDh object is
 ///
 /// [`new()`] takes in a curve and returns an EcDh struct who's EcKey has a private/public key pair assigned to it.
 ///

@@ -38,6 +38,7 @@ fn main() {
 
     #[cfg(target_os = "linux")]
     {
+        // Note: Currently only Windows is supported.
         println!("cargo:rustc-link-lib=dylib=symcrypt"); // the lib prefix for libsymcrypt is implied on linux
 
         // Linux based systems use a .so file format that is different from the .lib and .dll format on Windows.

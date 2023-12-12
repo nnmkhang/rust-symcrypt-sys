@@ -6,13 +6,9 @@ pub enum BlockCipherType {
     AesBlock,
 }
 
-unsafe impl Send for BlockCipherType {
+unsafe impl Send for BlockCipherType {}
 
-}
-
-unsafe impl Sync for BlockCipherType {
-
-}
+unsafe impl Sync for BlockCipherType {}
 
 pub(crate) fn convert_cipher(cipher: BlockCipherType) -> symcrypt_sys::PCSYMCRYPT_BLOCKCIPHER {
     match cipher {
