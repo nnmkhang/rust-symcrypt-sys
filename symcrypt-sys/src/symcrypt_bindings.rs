@@ -3424,14 +3424,13 @@ pub struct _SYMCRYPT_ECKEY {
     pub magic: SIZE_T,
 }
 
-// TODO: discuss
-// unsafe impl Send for _SYMCRYPT_ECKEY {
+unsafe impl Send for _SYMCRYPT_ECKEY {
+    // TODO: discuss send/sync implementation for rustls
+}
 
-// }
-
-// unsafe impl Sync for _SYMCRYPT_ECKEY {
-
-// }
+unsafe impl Sync for _SYMCRYPT_ECKEY {
+    // TODO: discuss send/sync implementation for rustls
+}
 
 #[test]
 fn bindgen_test_layout__SYMCRYPT_ECKEY() {
@@ -3668,7 +3667,6 @@ extern "C" {
     pub static SymCryptAesBlockCipher: PCSYMCRYPT_BLOCKCIPHER;
 }
 #[cfg(target_os = "linux")]
-#[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptAesBlockCipher: PCSYMCRYPT_BLOCKCIPHER;
 }

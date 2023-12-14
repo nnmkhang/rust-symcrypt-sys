@@ -7,11 +7,11 @@
 //! ```
 //! use hex::*;
 //! use symcrypt::chacha::chacha20_poly1305_encrypt_in_place;
-//! 
+//!
 //! // Set up inputs
 //! let mut key_array = [0u8; 32];
 //! hex::decode_to_slice( "808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",&mut key_array,).unwrap();
-//! 
+//!
 //! let mut nonce_array = [0u8; 12];
 //! hex::decode_to_slice("070000004041424344454647", &mut nonce_array).unwrap();
 //!
@@ -24,21 +24,21 @@
 //! let expected_cipher = "d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116";
 //! let expected_tag = "1ae10b594f09e26a7e902ecbd0600691";
 //! let mut tag = [0u8; 16];
-//! 
+//!
 //! // Encrypt in place, must check this does not fail before checking the buffer or tag values.
 //! chacha20_poly1305_encrypt_in_place(&key_array, &nonce_array, &auth_data, &mut buffer, &mut tag).unwrap();
 //!
 //! assert_eq!(hex::encode(buffer), expected_cipher);
 //! assert_eq!(hex::encode(tag), expected_tag);
-//! 
+//!
 //! ```
 //!
-//! ## Decrypt in place 
-//! 
+//! ## Decrypt in place
+//!
 //! ```
 //! use hex::*;
 //! use symcrypt::chacha::chacha20_poly1305_decrypt_in_place;
-//! 
+//!
 //! // Set up inputs
 //! let mut key_array = [0u8; 32];
 //! hex::decode_to_slice(
@@ -48,18 +48,18 @@
 //! .unwrap();
 //! let mut nonce_array = [0u8; 12];
 //! hex::decode_to_slice("070000004041424344454647", &mut nonce_array).unwrap();
-//! 
+//!
 //! let mut auth_data = [0u8; 12];
 //! hex::decode_to_slice("50515253c0c1c2c3c4c5c6c7", &mut auth_data).unwrap();
-//! 
+//!
 //! let mut buffer = [0u8; 114];
 //! hex::decode_to_slice("d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116", &mut buffer).unwrap();
-//! 
+//!
 //! let dst = "4c616469657320616e642047656e746c656d656e206f662074686520636c617373206f66202739393a204966204920636f756c64206f6666657220796f75206f6e6c79206f6e652074697020666f7220746865206675747572652c2073756e73637265656e20776f756c642062652069742e";
-//! 
+//!
 //! let mut tag_array = [0u8; 16];
 //! hex::decode_to_slice("1ae10b594f09e26a7e902ecbd0600691", &mut tag_array).unwrap();
-//! 
+//!
 //! // Decrypt in place, must check this does not fail before checking buffer values.
 //! chacha20_poly1305_decrypt_in_place(
 //!     &key_array,
@@ -69,11 +69,11 @@
 //!     &tag_array,
 //! )
 //! .unwrap();
-//! 
+//!
 //! assert_eq!(hex::encode(buffer), dst);
 //! ```
 //! }
-//! 
+//!
 use crate::errors::SymCryptError;
 use symcrypt_sys;
 

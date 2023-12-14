@@ -5,7 +5,7 @@ This crate provides friendly and idiomatic Rust wrappers over [SymCrypt](https:/
 
 This crate has a dependency on `symcrypt-sys`, which utilizes `bindgen` to create Rust/C FFI bindings.
 
-**Note:** As of version 0.1.0, only Windows is supported.
+**Note:** As of version 0.1.0, only Windows AMD64 (x86_64) is supported.
 
 ## Dll Setup
 

@@ -11,7 +11,7 @@ fn main() {
         // Look for the .lib file during link time. We are searching the lib/ path which has been set to be relative to the 
         // crate root directory. We are checking in the .lib file to maintain control over future FIPs compliance as well
         // as SymCrypt binding control.
-        println!("cargo:rustc-link-search=native={}", Path::new(&dir).join("lib/").display());
+        println!("cargo:rustc-link-search=native={}", Path::new(&dir).join("lib/amd64/").display()); // add an arcitecture directory, change ifdef to include amd 64. only going to support amd64 at alpha
 
         // Test module to search for in lieu of symcrypt.dll
         println!("cargo:rustc-link-lib=dylib=symcrypttestmodule");
