@@ -7,18 +7,46 @@ This crate has a dependency on `symcrypt-sys`, which utilizes `bindgen` to creat
 
 **Note:** As of version 0.1.0, only Windows AMD64 (x86_64) is supported.
 
-## Dll Setup
+## Installation
+To use the SymCrypt crate, you must have a local version of [SymCrypt](https://github.com/microsoft/SymCrypt) downloaded.
 
-### Get symcryptestmodule.dll
+Please follow the [Build Instructions](https://github.com/microsoft/SymCrypt/blob/main/BUILD.md) that is provided by SymCrypt to install SymCrypt for your target architecture.
 
-To use the SymCrypt crate, you must have a `symcrypttestmodule.dll` on your machine and Windows must be able to find it during runtime. You can obtain this `dll` by installing and building [SymCrypt](https://github.com/microsoft/SymCrypt/blob/main/BUILD.md). For ease of use, a `symcrypttestmodule.dll` will be included in this repository.
+Once SymCrypt is installed and built locally on your machine, we must configure your machine so that the SymCrypt crate's build script can easily find `symcrypttestmodule.dll` and `symcrypttestmodule.lib` 
+which are both requirements for the SymCrypt crate. 
 
+### Configure symcrypttestmodule.lib location
+The `symcrypttestmodule.lib` can be found in the the following path after SymCrypt has been successfully downloaded and built. 
 
-### Make symcrypttestmodule.dll findable
+`C:\Your-Path-To-SymCrypt\SymCrypt\bin\lib`
+ 
+The SymCrypt crate needs a static lib to link to during its build/link time. You must configure your system so that the SymCrypt crate's build script can easily find the needed `symcrypttestmodule.lib` file.
 
+You can configure your system one of 3 ways.
+
+1. Add the lib path as a one time cargo environment variable.
+    ```powershell
+    $env:RUSTFLAGS='-L C:\Your-Path-To-SymCrypt\SymCrypt\bin\lib'
+    ```
+    **Note:** This change will only persist within the current process, and you must re-set the PATH environment variable after closing the PowerShell window.
+
+2. Manually copy the `symcrypttestmodule.lib` to `C:\Windows\System32`
+    Doing this will ensure that any project that uses the SymCrypt crate will be able to access `symcrypttestmodule.lib`
+
+3. Permanently add the lib path into your system PATH environment variable. Doing this will ensure that any project that uses the SymCrypt crate will be able to access `symcrypttestmodule.lib`
+    This can be done manually or via powershell:
+    ```Powershell
+    [Environment]::SetEnvironmentVariable("RUSTFLAGS", "-L C:\Your-Path-To-SymCrypt\SymCrypt\bin\lib", [EnvironmentVariableTarget]::Machine)
+    ```
+**Option 1 or Option 2 is what is recommended for ease of use.**
+
+### Configure symcrypttesmodule.dll location
+
+The symcrypttestmodule.dll can be found in the the following path after SymCrypt has been successfully downloaded and built. 
+
+`C:\Your-Path-To-SymCrypt\SymCrypt\bin\exe`
 
 During runtime, Windows will handle finding all needed `dll`'s in order to run the intended program, this includes our `symcrypttestmodule.dll` file. The places Windows will look are:
-
 
 1. The folder from which the application loaded.
 2. The system folder. Use the `GetSystemDirectory` function to retrieve the path of this folder.
@@ -26,27 +54,30 @@ During runtime, Windows will handle finding all needed `dll`'s in order to run t
 4. The current folder.
 5. The directories listed in the PATH environment variable.
 
-For more info please see: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order
+For more info please see: [Dynamic-link library search order](https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order)
 
-Here are some recommended options to ensure your `symcrypttestmodule.dll` is found.
+Here are 4 recommended options to ensure your `symcrypttestmodule.dll` is found by Windows during runtime.
 
-1. The least invasive option is to put it in the same folder as your output `.exe` file. If you are doing development (not release), the common path will be: `C:/your-project/target/debug/`.
+1. Put the symcrypttesmodule.dll in the same folder as your output `.exe` file. If you are doing development (not release), the common path will be: `C:\your-project\target\debug\`.
+2. Add the symcrypttestmoudle.dll path as a one time environment variable. 
+    ```powershell
+    $env:PATH = "C:\Your-Path-To-SymCrypt\SymCrypt\bin\exe;$env:PATH"
+    ```
+    **Note:** This change will only persist within the current process, and you must re-set the PATH environment variable after closing the PowerShell window.
 
-2. Alternatively, you can set your PATH environment variable to include the `symcrypt-sys/lib/` path. Example (PowerShell):
-	```powershell
-	$env:PATH = "C:\Code\rust-symcrypt-sys\rust-symcrypt\lib;$env:PATH"
-	```
-	**Note:** This change will only persist within the current process, and you must re-set the PATH environment variable after closing the PowerShell window.
+3. Manually copy `symcrypttestmodule.dll` into your `C:/Windows/System32/` 
+    Doing this will ensure that any project that uses the SymCrypt crate will be able to access `symcrypttestmodule.dll`
+4. Permanently add the `symcrypttestmodule.dll` path into your System PATH environment variable.
+    Doing this will ensure that any project that uses the SymCrypt crate will be able to access `symcrypttestmodule.lib`
+    This can be done manually or via powershell:
+    ```Powershell
+        [Environment]::SetEnvironmentVariable("PATH", "C:\Your-Path-To-SymCrypt\SymCrypt\bin\exe", [EnvironmentVariableTarget]::Machine)
+    ```
+**Option 3 or Option 4 is what is recommended for ease of use.** 
 
-3. The easiest option is to manually copy your `symcrypttestmodule.dll` into your `C:/Windows/System32/` folder path. Windows will always search this path for `.dll` files. All future development using `symcrypttestmodule.dll` on your machine will also search the `C:/Windows/System32` path.
-
-**Note:** This process is a short-term solution for alpha testing. The long-term plan is to have a `symcrypt.dll` shipped with Windows, streamlining the process. In the short term, we are using `symcrypttestmodule.dll` as a workaround.
-
-To test that your `symcrypttestmodule.dll` is working correctly, and that Windows is able to find it, copy `symcrypttestmodule.dll` to your `rust-symcrypt/target/debug/deps/` folder, and run `cargo test` on the `symcrypt` crate.
 
 ## Supported APIs
 
-### Currently we support the following APIs from SymCrypt:
 Hashing:
 - Sha256 ( statefull/stateless )
 - Sha384 ( statefull/stateless )

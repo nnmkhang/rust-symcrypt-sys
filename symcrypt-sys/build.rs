@@ -1,17 +1,9 @@
-use std::env;
-use std::path::Path;
-
 fn main() {
     #[cfg(target_os = "windows")]
     {
-        // This will set a directory to be set to the root of the symcrypt-sys crate. This is to get relative paths to find
-        // the symcrypttestmodule.lib file during link time from other crates.
-        let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-
-        // Look for the .lib file during link time. We are searching the lib/ path which has been set to be relative to the 
-        // crate root directory. We are checking in the .lib file to maintain control over future FIPs compliance as well
-        // as SymCrypt binding control.
-        println!("cargo:rustc-link-search=native={}", Path::new(&dir).join("lib/amd64/").display()); // add an arcitecture directory, change ifdef to include amd 64. only going to support amd64 at alpha
+        // Look for the .lib file during link time. We are searching the Windows/System32 path which is set as a current default to match
+        // the long term placement of a Windows shipped symcrypt.dll 
+        println!("cargo:rustc-link-search=native=C:/Windows/System32/"); 
 
         // Test module to search for in lieu of symcrypt.dll
         println!("cargo:rustc-link-lib=dylib=symcrypttestmodule");
@@ -27,10 +19,6 @@ fn main() {
 
         // For the least invasive usage, we suggest putting the symcrypttestmodule.dll inside of same folder as the .exe file.
         // This will be something like: C:/your-project/target/debug/
-
-        // you can also set your PATH environment variable to include the symcrypt-sys/lib/ path.
-        // Example: $env:PATH = "C:\Code\rust-symcrypt-sys\rust-symcrypt\lib;$env:PATH"
-        // Note: This will only work inside the current process. Once the powershell window is closed you must re set PATH
 
         // Note: This process is a band-aid. Long-term SymCrypt will be shipped with Windows which will make this process much more
         // streamlined. 
