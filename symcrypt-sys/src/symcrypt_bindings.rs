@@ -45,7 +45,123 @@ pub type PCUINT32 = *const UINT32;
 pub type PVOID = *mut ::std::os::raw::c_void;
 pub type PCVOID = *const ::std::os::raw::c_void;
 pub type BOOLEAN = BYTE;
-pub type __m128i = [::std::os::raw::c_longlong; 2usize];
+#[repr(C)]
+#[repr(align(16))]
+#[derive(Copy, Clone)]
+pub union __m128i {
+    pub m128i_i8: [::std::os::raw::c_char; 16usize],
+    pub m128i_i16: [::std::os::raw::c_short; 8usize],
+    pub m128i_i32: [::std::os::raw::c_int; 4usize],
+    pub m128i_i64: [::std::os::raw::c_longlong; 2usize],
+    pub m128i_u8: [::std::os::raw::c_uchar; 16usize],
+    pub m128i_u16: [::std::os::raw::c_ushort; 8usize],
+    pub m128i_u32: [::std::os::raw::c_uint; 4usize],
+    pub m128i_u64: [::std::os::raw::c_ulonglong; 2usize],
+}
+#[test]
+fn bindgen_test_layout___m128i() {
+    const UNINIT: ::std::mem::MaybeUninit<__m128i> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<__m128i>(),
+        16usize,
+        concat!("Size of: ", stringify!(__m128i))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<__m128i>(),
+        16usize,
+        concat!("Alignment of ", stringify!(__m128i))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).m128i_i8) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(__m128i),
+            "::",
+            stringify!(m128i_i8)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).m128i_i16) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(__m128i),
+            "::",
+            stringify!(m128i_i16)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).m128i_i32) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(__m128i),
+            "::",
+            stringify!(m128i_i32)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).m128i_i64) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(__m128i),
+            "::",
+            stringify!(m128i_i64)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).m128i_u8) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(__m128i),
+            "::",
+            stringify!(m128i_u8)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).m128i_u16) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(__m128i),
+            "::",
+            stringify!(m128i_u16)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).m128i_u32) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(__m128i),
+            "::",
+            stringify!(m128i_u32)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).m128i_u64) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(__m128i),
+            "::",
+            stringify!(m128i_u64)
+        )
+    );
+}
+impl Default for __m128i {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 pub type SYMCRYPT_BLOCKCIPHER = _SYMCRYPT_BLOCKCIPHER;
 pub type PCSYMCRYPT_BLOCKCIPHER = *const SYMCRYPT_BLOCKCIPHER;
 #[repr(C)]
@@ -701,16 +817,6 @@ pub struct _SYMCRYPT_HMAC_SHA256_STATE {
     pub pKey: PCSYMCRYPT_HMAC_SHA256_EXPANDED_KEY,
     pub magic: SIZE_T,
 }
-
-// TODO: discuss 
-// unsafe impl Send for _SYMCRYPT_HMAC_SHA256_STATE {
-//     // TODO
-// }
-
-// unsafe impl Sync for _SYMCRYPT_HMAC_SHA256_STATE {
-//     // TODO
-// }
-
 #[test]
 fn bindgen_test_layout__SYMCRYPT_HMAC_SHA256_STATE() {
     const UNINIT: ::std::mem::MaybeUninit<_SYMCRYPT_HMAC_SHA256_STATE> =
@@ -766,6 +872,15 @@ impl Default for _SYMCRYPT_HMAC_SHA256_STATE {
         }
     }
 }
+
+unsafe impl Send for _SYMCRYPT_HMAC_SHA256_STATE {
+    // TODO: discuss send/sync implementation for rustls
+}
+
+unsafe impl Sync for _SYMCRYPT_HMAC_SHA256_STATE {
+    // TODO: discuss send/sync implementation for rustls
+}
+
 pub type SYMCRYPT_HMAC_SHA256_STATE = _SYMCRYPT_HMAC_SHA256_STATE;
 pub type PSYMCRYPT_HMAC_SHA256_STATE = *mut _SYMCRYPT_HMAC_SHA256_STATE;
 pub type PCSYMCRYPT_HMAC_SHA256_STATE = *const SYMCRYPT_HMAC_SHA256_STATE;
@@ -837,16 +952,6 @@ pub struct _SYMCRYPT_HMAC_SHA384_STATE {
     pub pKey: PCSYMCRYPT_HMAC_SHA384_EXPANDED_KEY,
     pub magic: SIZE_T,
 }
-
-// TODO: Discuss 
-// unsafe impl Send for _SYMCRYPT_HMAC_SHA384_STATE {
-//     // TODO
-// }
-
-// unsafe impl Sync for _SYMCRYPT_HMAC_SHA384_STATE {
-//     // TODO
-// }
-
 #[test]
 fn bindgen_test_layout__SYMCRYPT_HMAC_SHA384_STATE() {
     const UNINIT: ::std::mem::MaybeUninit<_SYMCRYPT_HMAC_SHA384_STATE> =
@@ -902,6 +1007,14 @@ impl Default for _SYMCRYPT_HMAC_SHA384_STATE {
         }
     }
 }
+unsafe impl Send for _SYMCRYPT_HMAC_SHA384_STATE {
+    // TODO: discuss send/sync implementation for rustls
+}
+
+unsafe impl Sync for _SYMCRYPT_HMAC_SHA384_STATE {
+    // TODO: discuss send/sync implementation for rustls
+}
+
 pub type SYMCRYPT_HMAC_SHA384_STATE = _SYMCRYPT_HMAC_SHA384_STATE;
 pub type PSYMCRYPT_HMAC_SHA384_STATE = *mut _SYMCRYPT_HMAC_SHA384_STATE;
 pub type PCSYMCRYPT_HMAC_SHA384_STATE = *const SYMCRYPT_HMAC_SHA384_STATE;
@@ -1761,6 +1874,15 @@ pub type PSYMCRYPT_BLOCKCIPHER_MAC_MODE = ::std::option::Option<
 pub type PSYMCRYPT_BLOCKCIPHER_AEADPART_MODE = ::std::option::Option<
     unsafe extern "C" fn(pState: PVOID, pbSrc: PCBYTE, pbDst: PBYTE, cbData: SIZE_T),
 >;
+
+unsafe impl Send for _SYMCRYPT_BLOCKCIPHER {
+    // TODO: discuss send/sync implementation for rustls
+}
+
+unsafe impl Sync for _SYMCRYPT_BLOCKCIPHER {
+    // TODO: discuss send/sync implementation for rustls
+}
+
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct _SYMCRYPT_BLOCKCIPHER {
@@ -1778,16 +1900,6 @@ pub struct _SYMCRYPT_BLOCKCIPHER {
     pub blockSize: SIZE_T,
     pub expandedKeySize: SIZE_T,
 }
-
-unsafe impl Send for _SYMCRYPT_BLOCKCIPHER {
-
-}
-
-unsafe impl Sync for _SYMCRYPT_BLOCKCIPHER {
-    
-}
-
-
 #[test]
 fn bindgen_test_layout__SYMCRYPT_BLOCKCIPHER() {
     const UNINIT: ::std::mem::MaybeUninit<_SYMCRYPT_BLOCKCIPHER> =
@@ -2838,6 +2950,15 @@ impl Default for _SYMCRYPT_ECURVE_INFO_PRECOMP {
     }
 }
 pub type SYMCRYPT_ECURVE_INFO_PRECOMP = _SYMCRYPT_ECURVE_INFO_PRECOMP;
+
+unsafe impl Send for _SYMCRYPT_ECURVE {
+    // TODO: discuss send/sync implemenation for rustls
+}
+
+unsafe impl Sync for _SYMCRYPT_ECURVE {
+    // TODO: discuss send/sync implementation for rustls
+} 
+
 #[repr(C)]
 #[repr(align(32))]
 #[derive(Copy, Clone)]
@@ -2872,32 +2993,6 @@ pub struct _SYMCRYPT_ECURVE {
     pub H: PSYMCRYPT_INT,
     pub magic: SIZE_T,
 }
-
-// TODO: Discuss
-unsafe impl Send for _SYMCRYPT_ECURVE {
-
-}
-
-unsafe impl Sync for _SYMCRYPT_ECURVE {
-
-}
-
-// unsafe impl Send for _SYMCRYPT_ECURVE_PARAMS {
-
-// }
-
-// unsafe impl Sync for _SYMCRYPT_ECURVE_PARAMS {
-
-// }
-
-// unsafe impl Sync for PSYMCRYPT_ECURVE {
-
-// }
-
-// unsafe impl Send for PSYMCRYPT_ECURVE {
-
-// }
-
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union _SYMCRYPT_ECURVE__bindgen_ty_1 {
@@ -3329,14 +3424,13 @@ pub struct _SYMCRYPT_ECKEY {
     pub magic: SIZE_T,
 }
 
-// TODO: discuss
-// unsafe impl Send for _SYMCRYPT_ECKEY {
+unsafe impl Send for _SYMCRYPT_ECKEY {
+    // TODO: discuss send/sync implementation for rustls
+}
 
-// }
-
-// unsafe impl Sync for _SYMCRYPT_ECKEY {
-
-// }
+unsafe impl Sync for _SYMCRYPT_ECKEY {
+    // TODO: discuss send/sync implementation for rustls
+}
 
 #[test]
 fn bindgen_test_layout__SYMCRYPT_ECKEY() {
@@ -3447,18 +3541,6 @@ extern "C" {
     pub fn SymCryptSha256StateCopy(pSrc: PCSYMCRYPT_SHA256_STATE, pDst: PSYMCRYPT_SHA256_STATE);
 }
 extern "C" {
-    pub fn SymCryptSha256StateExport(pState: PCSYMCRYPT_SHA256_STATE, pbBlob: PBYTE);
-}
-extern "C" {
-    pub fn SymCryptSha256StateImport(
-        pState: PSYMCRYPT_SHA256_STATE,
-        pbBlob: PCBYTE,
-    ) -> SYMCRYPT_ERROR;
-}
-extern "C" {
-    pub fn SymCryptSha256Selftest();
-}
-extern "C" {
     pub fn SymCryptSha384(pbData: PCBYTE, cbData: SIZE_T, pbResult: PBYTE);
 }
 extern "C" {
@@ -3474,29 +3556,11 @@ extern "C" {
     pub fn SymCryptSha384StateCopy(pSrc: PCSYMCRYPT_SHA384_STATE, pDst: PSYMCRYPT_SHA384_STATE);
 }
 extern "C" {
-    pub fn SymCryptSha384StateExport(pState: PCSYMCRYPT_SHA384_STATE, pbBlob: PBYTE);
-}
-extern "C" {
-    pub fn SymCryptSha384StateImport(
-        pState: PSYMCRYPT_SHA384_STATE,
-        pbBlob: PCBYTE,
-    ) -> SYMCRYPT_ERROR;
-}
-extern "C" {
-    pub fn SymCryptSha384Selftest();
-}
-extern "C" {
     pub fn SymCryptHmacSha256ExpandKey(
         pExpandedKey: PSYMCRYPT_HMAC_SHA256_EXPANDED_KEY,
         pbKey: PCBYTE,
         cbKey: SIZE_T,
     ) -> SYMCRYPT_ERROR;
-}
-extern "C" {
-    pub fn SymCryptHmacSha256KeyCopy(
-        pSrc: PCSYMCRYPT_HMAC_SHA256_EXPANDED_KEY,
-        pDst: PSYMCRYPT_HMAC_SHA256_EXPANDED_KEY,
-    );
 }
 extern "C" {
     pub fn SymCryptHmacSha256(
@@ -3530,20 +3594,11 @@ extern "C" {
     pub fn SymCryptHmacSha256Result(pState: PSYMCRYPT_HMAC_SHA256_STATE, pbResult: PBYTE);
 }
 extern "C" {
-    pub fn SymCryptHmacSha256Selftest();
-}
-extern "C" {
     pub fn SymCryptHmacSha384ExpandKey(
         pExpandedKey: PSYMCRYPT_HMAC_SHA384_EXPANDED_KEY,
         pbKey: PCBYTE,
         cbKey: SIZE_T,
     ) -> SYMCRYPT_ERROR;
-}
-extern "C" {
-    pub fn SymCryptHmacSha384KeyCopy(
-        pSrc: PCSYMCRYPT_HMAC_SHA384_EXPANDED_KEY,
-        pDst: PSYMCRYPT_HMAC_SHA384_EXPANDED_KEY,
-    );
 }
 extern "C" {
     pub fn SymCryptHmacSha384(
@@ -3575,9 +3630,6 @@ extern "C" {
 }
 extern "C" {
     pub fn SymCryptHmacSha384Result(pState: PSYMCRYPT_HMAC_SHA384_STATE, pbResult: PBYTE);
-}
-extern "C" {
-    pub fn SymCryptHmacSha384Selftest();
 }
 extern "C" {
     pub fn SymCryptChaCha20Poly1305Encrypt(
@@ -3615,7 +3667,6 @@ extern "C" {
     pub static SymCryptAesBlockCipher: PCSYMCRYPT_BLOCKCIPHER;
 }
 #[cfg(target_os = "linux")]
-#[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
     pub static SymCryptAesBlockCipher: PCSYMCRYPT_BLOCKCIPHER;
 }
@@ -3635,9 +3686,6 @@ extern "C" {
         pbKey: PCBYTE,
         cbKey: SIZE_T,
     ) -> SYMCRYPT_ERROR;
-}
-extern "C" {
-    pub fn SymCryptGcmKeyCopy(pSrc: PCSYMCRYPT_GCM_EXPANDED_KEY, pDst: PSYMCRYPT_GCM_EXPANDED_KEY);
 }
 extern "C" {
     pub fn SymCryptGcmEncrypt(
@@ -3710,9 +3758,6 @@ extern "C" {
         pbTag: PCBYTE,
         cbTag: SIZE_T,
     ) -> SYMCRYPT_ERROR;
-}
-extern "C" {
-    pub fn SymCryptGcmSelftest();
 }
 extern "C" {
     pub fn SymCryptTlsPrf1_2ExpandKey(
@@ -3811,6 +3856,15 @@ pub const _SYMCRYPT_ECURVE_GEN_ALG_ID_SYMCRYPT_ECURVE_GEN_ALG_ID_NULL: _SYMCRYPT
     0;
 pub type _SYMCRYPT_ECURVE_GEN_ALG_ID = ::std::os::raw::c_int;
 pub use self::_SYMCRYPT_ECURVE_GEN_ALG_ID as SYMCRYPT_ECURVE_GEN_ALG_ID;
+
+unsafe impl Send for _SYMCRYPT_ECURVE_PARAMS {
+    // TODO: discuss send/sync implementation for rustls
+}  
+
+unsafe impl Sync for _SYMCRYPT_ECURVE_PARAMS {
+    // TODO: discuss send/sync implementation for rustls
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct _SYMCRYPT_ECURVE_PARAMS {
@@ -3933,55 +3987,14 @@ extern "C" {
     pub fn SymCryptEcurveFree(pCurve: PSYMCRYPT_ECURVE);
 }
 extern "C" {
-    pub fn SymCryptSizeofEckeyFromCurve(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
-}
-extern "C" {
     pub fn SymCryptEckeyAllocate(pCurve: PCSYMCRYPT_ECURVE) -> PSYMCRYPT_ECKEY;
 }
 extern "C" {
     pub fn SymCryptEckeyFree(pkObj: PSYMCRYPT_ECKEY);
 }
 extern "C" {
-    pub fn SymCryptEckeyCreate(
-        pbBuffer: PBYTE,
-        cbBuffer: SIZE_T,
-        pCurve: PCSYMCRYPT_ECURVE,
-    ) -> PSYMCRYPT_ECKEY;
-}
-extern "C" {
-    pub fn SymCryptEckeyWipe(pkDst: PSYMCRYPT_ECKEY);
-}
-extern "C" {
-    pub fn SymCryptEckeyCopy(pkSrc: PCSYMCRYPT_ECKEY, pkDst: PSYMCRYPT_ECKEY);
-}
-extern "C" {
-    pub fn SymCryptEcurvePrivateKeyDefaultFormat(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
-}
-extern "C" {
-    pub fn SymCryptEcurveHighBitRestrictionNumOfBits(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
-}
-extern "C" {
-    pub fn SymCryptEcurveHighBitRestrictionPosition(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
-}
-extern "C" {
-    pub fn SymCryptEcurveHighBitRestrictionValue(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
-}
-extern "C" {
-    pub fn SymCryptEcurveBitsizeofFieldModulus(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
-}
-extern "C" {
-    pub fn SymCryptEcurveBitsizeofGroupOrder(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
-}
-extern "C" {
     pub fn SymCryptEcurveSizeofFieldElement(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
 }
-extern "C" {
-    pub fn SymCryptEcurveSizeofScalarMultiplier(pCurve: PCSYMCRYPT_ECURVE) -> UINT32;
-}
-extern "C" {
-    pub fn SymCryptEcurveIsSame(pCurve1: PCSYMCRYPT_ECURVE, pCurve2: PCSYMCRYPT_ECURVE) -> BOOLEAN;
-}
-
 #[cfg(target_os = "windows")]
 #[link(name = "symcrypttestmodule", kind = "dylib")]
 extern "C" {
@@ -4016,12 +4029,6 @@ extern "C" {
     ) -> UINT32;
 }
 extern "C" {
-    pub fn SymCryptEckeySizeofPrivateKey(pkEckey: PCSYMCRYPT_ECKEY) -> UINT32;
-}
-extern "C" {
-    pub fn SymCryptEckeyHasPrivateKey(pkEckey: PCSYMCRYPT_ECKEY) -> BOOLEAN;
-}
-extern "C" {
     pub fn SymCryptEckeySetValue(
         pbPrivateKey: PCBYTE,
         cbPrivateKey: SIZE_T,
@@ -4047,9 +4054,6 @@ extern "C" {
         ecPointFormat: SYMCRYPT_ECPOINT_FORMAT,
         flags: UINT32,
     ) -> SYMCRYPT_ERROR;
-}
-extern "C" {
-    pub fn SymCryptEckeyExtendKeyUsage(pEckey: PSYMCRYPT_ECKEY, flags: UINT32) -> SYMCRYPT_ERROR;
 }
 extern "C" {
     pub fn SymCryptEcDhSecretAgreement(

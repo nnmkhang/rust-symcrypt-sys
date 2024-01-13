@@ -1,83 +1,38 @@
-extern crate bindgen;
-
-use std::env;
-use std::path::PathBuf;
-
 fn main() {
     #[cfg(target_os = "windows")]
     {
-        println!("cargo:rustc-link-search=native=C:/Windows/System32/"); // ! Work around, looking for better solution
-        println!("cargo:libdir=../SymCrypt/inc");
-        println!("cargo:rustc-link-lib=dylib=symcrypttestmodule"); // test module used in lieu of official symcrypt dll
-                                                                   // this dll will be in Windows/System32. This is to mirror future plans; as symcrypt is planned to ship with windows
-                                                                   // symcrypttestmodule* files must be placed in Windows/System32/ as a workaround at the moment.
+        // Look for the .lib file during link time. We are searching the Windows/System32 path which is set as a current default to match
+        // the long term placement of a Windows shipped symcrypt.dll 
+        println!("cargo:rustc-link-search=native=C:/Windows/System32/"); 
+
+        // Test module to search for in lieu of symcrypt.dll
+        println!("cargo:rustc-link-lib=dylib=symcrypttestmodule");
+
+        // During run time, the OS will handle finding the symcrypttestmodule.dll file. The places Windows will look will be:
+        // 1. The folder from which the application loaded.
+        // 2. The system folder. Use the GetSystemDirectory function to retrieve the path of this folder.
+        // 3. The Windows folder. Use the GetWindowsDirectory function to get the path of this folder.
+        // 4. The current folder.
+        // 5. The directories that are listed in the PATH environment variable. 
+
+        // For more info please see: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order
+
+        // For the least invasive usage, we suggest putting the symcrypttestmodule.dll inside of same folder as the .exe file.
+        // This will be something like: C:/your-project/target/debug/
+
+        // Note: This process is a band-aid. Long-term SymCrypt will be shipped with Windows which will make this process much more
+        // streamlined. 
     }
 
     #[cfg(target_os = "linux")]
     {
-        println!("cargo:libdir=../SymCrypt/inc");
+        // Note: Currently only Windows is supported.
         println!("cargo:rustc-link-lib=dylib=symcrypt"); // the lib prefix for libsymcrypt is implied on linux
 
+        // Linux based systems use a .so file format that is different from the .lib and .dll format on Windows.
         // TODO: Create a script that copies all libsymcrypt.so* files from SymCrypt path to /lib/x86_64-linux-gnu/
         // The ld linker will look for the symcrypt.so files within /lib/x86_64-linux-gnu/. No need to set a hardcoded path.
-        // This is not needed on Mariner as it comes with SymCrypt out of the box.
+        // This is not needed on Mariner as it comes with SymCrypt out of the box. SymCrypt team will work to create a SymCrypt
+        // package that will be available via apt get which will install the symcrypt.so files to /lib/x86_64-linux-gnu
     }
-
-    // Since we are pulling in symcrypt as a submodule, it should be pretty easy to run a vendored build, this would allow us
-    // to hard stop at a commit and ensure that there is no discrepancy between build version and header version
-
-    // TODO: Factor out binding generation. Bindgen should only be run manually with updates to underlying SymCrypt code that
-    // we decide what to take.
-    println!("cargo:rerun-if-changed=inc/wrapper.h");
-
-    // TODO: Discuss if factoring the .allowlist_functions to another file is better approach
-
-    let bindings = bindgen::Builder::default()
-        .header("wrapper.h")
-        .clang_arg("-v")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        // ALLOWLIST
-        // INIT FUNCTIONS
-        .allowlist_function("SymCryptModuleInit")
-        .allowlist_var("^(SYMCRYPT_CODE_VERSION.*)$")
-        // HASH FUNCTIONS
-        .allowlist_function("^(SymCryptSha256.*)$")
-        .allowlist_function("^(SymCryptSha384.*)$")
-        .allowlist_var("SYMCRYPT_SHA256_RESULT_SIZE")
-        .allowlist_var("SYMCRYPT_SHA384_RESULT_SIZE")
-        // HMAC FUNCTIONS
-        .allowlist_function("^(SymCryptHmacSha256.*)$")
-        .allowlist_function("^(SymCryptHmacSha384.*)$")
-        // GCM FUNCTIONS
-        .allowlist_function("^(SymCryptGcm.*)$")
-        .allowlist_function("SymCryptChaCha20Poly1305Encrypt")
-        .allowlist_function("SymCryptChaCha20Poly1305Decrypt")
-        .allowlist_function("SymCryptTlsPrf1_2ExpandKey")
-        .allowlist_function("SymCryptTlsPrf1_2Derive")
-        .allowlist_function("SymCryptTlsPrf1_2")
-        .allowlist_var("SymCryptAesBlockCipher")
-        // HKDF functions
-        .allowlist_function("^(SymCryptHkdf.*)$")
-        // ECDH Key Agreement
-        .allowlist_var("SymCryptEcurveParamsNistP256")
-        .allowlist_var("SymCryptEcurveParamsNistP384")
-        .allowlist_var("SymCryptEcurveParamsCurve25519")
-        .allowlist_var("SYMCRYPT_FLAG_ECKEY_ECDH")
-        .allowlist_function("^(SymCryptEcurve.*)$")
-        .allowlist_function("^(SymCryptEckey.*)$")
-        .allowlist_function("SymCryptEcDhSecretAgreement")
-        .allowlist_function("SymCryptSizeofEckeyFromCurve")
-        // Utility functions
-        .allowlist_function("SymCryptWipe")
-        .allowlist_function("SymCryptRandom")
-        
-        .generate_comments(true)
-        .derive_default(true)
-        .generate()
-        .expect("Unable to generate bindings");
-
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
 }

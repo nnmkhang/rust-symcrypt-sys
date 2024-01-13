@@ -4,6 +4,7 @@ use std::convert::From;
 use std::fmt;
 use symcrypt_sys;
 
+/// `SymCryptError` is an enum that enumerates all of the errors from `SymCrypt`.
 #[non_exhaustive]
 #[derive(Debug, PartialEq)]
 pub enum SymCryptError {
@@ -31,6 +32,7 @@ pub enum SymCryptError {
     UnknownError(i32), // Catch-all for unknown error codes
 }
 
+/// Matches raw `SymCrypt` error to the [`SymCryptError`] enum.
 impl From<symcrypt_sys::SYMCRYPT_ERROR> for SymCryptError {
     fn from(err: symcrypt_sys::SYMCRYPT_ERROR) -> Self {
         match err {
@@ -78,6 +80,7 @@ impl From<symcrypt_sys::SYMCRYPT_ERROR> for SymCryptError {
     }
 }
 
+/// Implements `Display` for the [`SymCryptError`] enum to allow for better print usage.
 impl fmt::Display for SymCryptError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let message = match *self {
